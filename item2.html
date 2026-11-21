@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <title>TimeFlow Mirror Control Panel — Full CRUD Admin Suite</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              950: '#06080e',
+              900: '#0c101c',
+              850: '#121829',
+              800: '#192136',
+            }
+          },
+          boxShadow: {
+            'glow-indigo': '0 0 28px -5px rgba(99, 102, 241, 0.35)',
+            'glow-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.30)',
+            'glow-rose': '0 0 25px -5px rgba(244, 63, 94, 0.35)',
+            'glow-amber': '0 0 25px -5px rgba(245, 158, 11, 0.30)',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.65); }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .ambient-bg {
+      background-image:
+        radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.10) 0px, transparent 45%),
+        radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.14) 0px, transparent 45%),
+        radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+    }
+    .dark .ambient-bg {
+      background-image:
+        radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.14) 0px, transparent 45%),
+        radial-gradient(at 100% 10%, rgba(99, 102, 241, 0.18) 0px, transparent 48%),
+        radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.10) 0px, transparent 50%);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-obsidian-950 dark:text-slate-100 ambient-bg min-h-screen flex flex-col overflow-x-hidden transition-colors duration-300 selection:bg-amber-500 selection:text-white">
+
+  <!-- Hidden File Input for Importing JSON Backup -->
+  <input type="file" id="import-json-input" accept=".json,application/json" class="hidden" />
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 left-4 sm:left-auto z-50 flex flex-col gap-2.5 pointer-events-none sm:max-w-sm"></div>
+
+  <!-- Top Admin Mirror Header -->
+  <header class="sticky top-0 z-30 bg-white/85 dark:bg-obsidian-900/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div class="flex flex-wrap items-center justify-between gap-2.5 py-3">
+        <!-- Brand Identity -->
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-600 to-rose-600 flex items-center justify-center text-white shadow-glow-amber relative shrink-0">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-obsidian-900"></span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h1 class="text-base sm:text-lg font-black tracking-tight bg-gradient-to-r from-slate-900 via-amber-700 to-rose-700 dark:from-white dark:via-amber-200 dark:to-rose-300 bg-clip-text text-transparent truncate">TimeFlow Mirror</h1>
+              <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30 shrink-0">CONTROL PANEL</span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block truncate">Unrestricted Add / Edit / Delete Mirror for Schedule, Study, Video Vault & Profit Ledger</p>
+          </div>
+        </div>
+
+        <!-- Global Sync, Import, Export & Theme Controls -->
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <span id="storage-sync-indicator" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-300 text-[11px] font-mono font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Storage Synced</span>
+          </span>
+
+          <button type="button" onclick="triggerImportJson()" title="Import / Load JSON Backup from TimeFlow Command Center" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-sky-500/15 border border-sky-500/30 hover:bg-sky-500/25 text-sky-600 dark:text-sky-300 transition">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+            <span>Import JSON</span>
+          </button>
+
+          <button type="button" onclick="exportSyncedJson()" title="Export Synced JSON Backup for TimeFlow Command Center" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-300 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Export JSON</span>
+          </button>
+
+          <button id="theme-toggle-btn" type="button" title="Toggle Dark/Light Theme" class="p-2 rounded-xl bg-white/90 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700/80 hover:border-amber-400 text-slate-700 dark:text-slate-200 transition shadow-sm">
+            <i data-lucide="moon" class="w-4 h-4 dark:hidden text-indigo-600"></i>
+            <i data-lucide="sun" class="w-4 h-4 hidden dark:inline text-amber-400"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5-Module Admin Navigation Bar -->
+      <nav class="flex items-center gap-1 overflow-x-auto pb-0 -mb-px" aria-label="Admin Tabs">
+        <button data-tab="overview" type="button" class="nav-tab active inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-amber-500 text-amber-600 dark:text-amber-400 whitespace-nowrap transition">
+          <i data-lucide="cpu" class="w-4 h-4"></i>
+          <span>Overview & Raw JSON</span>
+        </button>
+        <button data-tab="schedule" type="button" class="nav-tab inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap transition">
+          <i data-lucide="calendar-cog" class="w-4 h-4 text-indigo-500"></i>
+          <span>Schedule & Study Overrides</span>
+        </button>
+        <button data-tab="subjects" type="button" class="nav-tab inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap transition">
+          <i data-lucide="layers" class="w-4 h-4 text-violet-500"></i>
+          <span>Subject & Ratio CRUD</span>
+        </button>
+        <button data-tab="videos" type="button" class="nav-tab inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap transition">
+          <i data-lucide="youtube" class="w-4 h-4 text-rose-500"></i>
+          <span>Video Creation Manager</span>
+          <span id="nav-video-badge" class="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-extrabold bg-rose-500/15 text-rose-500 border border-rose-500/25">1</span>
+        </button>
+        <button data-tab="profit" type="button" class="nav-tab inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap transition">
+          <i data-lucide="candlestick-chart" class="w-4 h-4 text-emerald-500"></i>
+          <span>Profit & PNL Control</span>
+          <span id="nav-pnl-badge" class="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-extrabold bg-emerald-500/15 text-emerald-500 border border-emerald-500/25">188,141 | 21,275</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 min-w-0">
+
+    <!-- Top Live Telemetry KPI Bar -->
+    <section class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+      <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
+        <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+          <span>Logged Days</span>
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-500"></i>
+        </div>
+        <div id="kpi-total-days" class="text-2xl font-black font-mono text-slate-900 dark:text-white tabular-nums">3</div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Daily schedule records</div>
+      </div>
+
+      <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
+        <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+          <span>Subjects</span>
+          <i data-lucide="book-open" class="w-3.5 h-3.5 text-violet-500"></i>
+        </div>
+        <div id="kpi-total-subjects" class="text-2xl font-black font-mono text-violet-600 dark:text-violet-400 tabular-nums">8</div>
+        <div id="kpi-reward-ratio-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Reward multiplier: 25%</div>
+      </div>
+
+      <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
+        <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+          <span>Video Vault</span>
+          <i data-lucide="youtube" class="w-3.5 h-3.5 text-rose-500"></i>
+        </div>
+        <div id="kpi-total-videos" class="text-2xl font-black font-mono text-rose-600 dark:text-rose-400 tabular-nums">1</div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Archived proof videos</div>
+      </div>
+
+      <div class="bg-gradient-to-br from-rose-600 to-red-700 rounded-2xl p-4 text-white shadow-glow-rose min-w-0">
+        <div class="text-[11px] font-black uppercase tracking-wider text-rose-100">Withdrawn Profit Vault</div>
+        <div id="kpi-withdrawn-profit" class="text-2xl font-black font-mono mt-1 tabular-nums">188,141</div>
+        <div class="text-[11px] text-rose-100/80 mt-1">Locked accumulated profit</div>
+      </div>
+
+      <div class="col-span-2 lg:col-span-1 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-4 text-white shadow-glow-indigo min-w-0">
+        <div class="text-[11px] font-black uppercase tracking-wider text-indigo-100">Playing Wallet</div>
+        <div id="kpi-playing-wallet" class="text-2xl font-black font-mono mt-1 tabular-nums">21,275</div>
+        <div class="text-[11px] text-indigo-200 mt-1">Active trading capital</div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: OVERVIEW & RAW JSON STATE INSPECTOR                            -->
+    <!-- ===================================================================== -->
+    <div id="tab-overview" class="tab-panel space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Storage Bridge & Quick Action Cards (5 cols) -->
+        <div class="lg:col-span-5 space-y-5 min-w-0">
+          <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+            <span class="text-[10px] font-extrabold uppercase tracking-widest text-amber-500">Dual-Storage Bridge</span>
+            <h2 class="text-lg font-black text-slate-900 dark:text-white mt-0.5">Live Mirror & File Sync</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+              This Mirror Control Panel reads and writes directly to your browser's <code class="px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-obsidian-850 font-mono text-[11px]">localStorage</code> (<code class="font-mono text-[11px]">timeflow_command_center_v12</code> &amp; <code class="font-mono text-[11px]">timeflow_dashboard_v1</code>). If you open HTML files via <code class="font-mono text-[11px]">file:///</code> across separate downloads, use <strong>Export JSON</strong> here and <strong>Restore</strong> in TimeFlow Command Center.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <button type="button" onclick="triggerImportJson()" class="p-3.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-left transition">
+                <div class="flex items-center gap-2 text-sky-600 dark:text-sky-300 font-extrabold text-xs">
+                  <i data-lucide="upload" class="w-4 h-4"></i>
+                  <span>Load JSON File</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Import state from Command Center</p>
+              </button>
+
+              <button type="button" onclick="exportSyncedJson()" class="p-3.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-left transition">
+                <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-300 font-extrabold text-xs">
+                  <i data-lucide="download" class="w-4 h-4"></i>
+                  <span>Export Synced JSON</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Save updated backup to restore</p>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-rose-500/25 shadow-sm">
+            <span class="text-[10px] font-extrabold uppercase tracking-widest text-rose-500">Admin Recovery</span>
+            <h3 class="text-base font-black text-slate-900 dark:text-white mt-0.5">Baseline Reset Controls</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Restore clean default baseline data (188,141 Withdrawn Profit / 21,275 Playing Wallet &amp; default study subjects).
+            </p>
+            <button type="button" onclick="confirmAction('Reset Entire Mirror State to Default Baseline?', 'This will overwrite current localStorage data with the initial default seed.', () => { appState = createInitialSeedData(); saveAllSyncedKeys(); renderAll(); showToast('Reset to clean default baseline!'); })" class="mt-3.5 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold bg-rose-600 hover:bg-rose-500 text-white shadow-sm transition">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Reset All Data to Baseline</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Raw JSON State Inspector & Live Editor (7 cols) -->
+        <div class="lg:col-span-7 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col min-w-0">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-500">Direct Database Inspector</span>
+              <h3 class="text-base font-black text-slate-900 dark:text-white">Raw JSON State Editor</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="refreshRawJsonEditor()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-obsidian-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition">
+                Refresh View
+              </button>
+              <button type="button" onclick="applyRawJsonChanges()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition">
+                Apply Raw JSON
+              </button>
+            </div>
+          </div>
+          <textarea id="raw-json-textarea" rows="16" spellcheck="false" class="w-full flex-1 p-3.5 rounded-xl bg-slate-950 text-emerald-300 border border-slate-800 font-mono text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: SCHEDULE & STUDY OVERRIDES (ADD / EDIT / DELETE)               -->
+    <!-- ===================================================================== -->
+    <div id="tab-schedule" class="tab-panel hidden space-y-6">
+      <!-- Date Selector & Day Record Management Bar -->
+      <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <div>
+              <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Select / Create Date</label>
+              <input type="date" id="admin-date-picker" class="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 text-sm font-mono font-bold text-slate-900 dark:text-white focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Sleep Hours</label>
+              <input type="number" id="admin-sleep-input" step="0.25" min="0" max="24" class="w-24 px-3 py-2 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 text-sm font-mono font-extrabold text-violet-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Classes (1h ea)</label>
+              <input type="number" id="admin-classes-input" step="1" min="0" max="16" class="w-24 px-3 py-2 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 text-sm font-mono font-extrabold text-sky-500 focus:outline-none" />
+            </div>
+            <div class="pt-4">
+              <span id="admin-avail-study-pill" class="px-3 py-2 rounded-xl bg-indigo-500/15 border border-indigo-500/25 text-xs font-mono font-black text-indigo-600 dark:text-indigo-300">
+                Available Study (S): 11.00h (660m)
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="deleteCurrentDayRecord()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-500 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Delete Day Record</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Existing Saved Dates Pills -->
+        <div class="mt-4 pt-3 border-t border-slate-200/70 dark:border-slate-800 flex flex-wrap items-center gap-1.5">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1">Saved Dates:</span>
+          <div id="admin-saved-dates-pills" class="flex flex-wrap gap-1.5"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left (6 cols): Timeline Tasks CRUD -->
+        <div class="lg:col-span-6 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4 min-w-0">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-black text-slate-900 dark:text-white">Daily Timeline Blocks (Add / Edit / Delete)</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Add, modify, or delete fixed routines & unexpected blocks</p>
+            </div>
+          </div>
+
+          <!-- Inline Add / Edit Timeline Task Form -->
+          <form id="admin-task-form" class="p-4 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 space-y-3">
+            <input type="hidden" id="admin-task-edit-id" />
+            <div class="flex items-center justify-between">
+              <span id="admin-task-form-heading" class="text-xs font-black uppercase tracking-wider text-indigo-500">Add New Timeline Task</span>
+              <button type="button" id="admin-task-cancel-btn" onclick="resetAdminTaskForm()" class="hidden text-xs font-bold text-slate-400 hover:text-rose-500">Cancel Edit</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <input type="text" id="admin-task-name" required placeholder="Task Name (e.g., Lunch)" class="sm:col-span-2 px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs font-bold focus:outline-none" />
+              <select id="admin-task-category" class="px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs font-bold focus:outline-none">
+                <option value="fixed">Fixed Routine</option>
+                <option value="unexpected">Unexpected</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-3 gap-2.5">
+              <input type="time" id="admin-task-start" required value="12:00" class="px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold focus:outline-none" />
+              <input type="time" id="admin-task-end" required value="12:30" class="px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold focus:outline-none" />
+              <select id="admin-task-icon" class="px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs font-bold focus:outline-none">
+                <option value="⚡">⚡ Event</option>
+                <option value="🎬">🎬 Video</option>
+                <option value="🍳">🍳 Meal</option>
+                <option value="🥗">🥗 Lunch</option>
+                <option value="🍽️">🍽️ Dinner</option>
+                <option value="🪥">🪥 Routine</option>
+                <option value="💻">💻 Study/Code</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <input type="text" id="admin-task-desc" placeholder="Description..." class="px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs focus:outline-none" />
+              <input type="text" id="admin-task-note" placeholder="Completion Note (optional)" class="px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs focus:outline-none" />
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <label class="inline-flex items-center gap-2 text-xs font-bold cursor-pointer">
+                <input type="checkbox" id="admin-task-completed" class="rounded text-emerald-500" />
+                <span>Mark Completed</span>
+              </label>
+              <button type="submit" id="admin-task-submit-btn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-sm transition">
+                + Save Block
+              </button>
+            </div>
+          </form>
+
+          <!-- Timeline Blocks List with Edit & Delete -->
+          <div id="admin-tasks-list" class="space-y-2 max-h-[420px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- Right (6 cols): Subject & Study Step Admin Override Panel -->
+        <div class="lg:col-span-6 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4 min-w-0">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-[10px] font-extrabold uppercase tracking-widest text-amber-500">Admin Bypass Controls</span>
+              <h3 class="text-base font-black text-slate-900 dark:text-white">Subject, Step & Reward Overrides</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Manually grant, modify, or revoke completion status for any subject, 5-step timer block, or reward</p>
+            </div>
+          </div>
+
+          <div id="admin-study-overrides-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: SUBJECT & RATIO CRUD                                           -->
+    <!-- ===================================================================== -->
+    <div id="tab-subjects" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Add / Edit Subject Form + Reward Ratio (4 cols) -->
+        <div class="lg:col-span-4 space-y-5 min-w-0">
+          <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+            <h3 class="text-sm font-black uppercase tracking-wider text-amber-500 mb-2">Global Reward Multiplier</h3>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-xs text-slate-500 dark:text-slate-400">Reward % of preceding subject</span>
+              <div class="flex items-center gap-1.5">
+                <input type="number" id="admin-reward-pct-input" min="0" max="100" step="1" class="w-20 px-3 py-2 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm font-mono font-black text-right" />
+                <span class="text-xs font-bold">%</span>
+                <button type="button" onclick="saveGlobalRewardRatio()" class="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold transition">Save</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 id="admin-sub-form-title" class="text-base font-black text-slate-900 dark:text-white">Add New Subject</h3>
+              <button type="button" id="admin-sub-cancel-btn" onclick="resetAdminSubjectForm()" class="hidden text-xs font-bold text-slate-400 hover:text-rose-500">Cancel Edit</button>
+            </div>
+            <form id="admin-subject-form" class="space-y-3">
+              <input type="hidden" id="admin-sub-edit-id" />
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-xs font-bold mb-1">Subject Code</label>
+                  <input type="text" id="admin-sub-code" required placeholder="e.g., PHY101" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold uppercase focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold mb-1">Allocation % of (S)</label>
+                  <input type="number" id="admin-sub-pct" required step="0.01" min="0" max="100" placeholder="10.0" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold focus:outline-none" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Subject Name</label>
+                <input type="text" id="admin-sub-name" required placeholder="e.g., Quantum Physics" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-semibold focus:outline-none" />
+              </div>
+              <div class="grid grid-cols-2 gap-2.5 items-end">
+                <div>
+                  <label class="block text-xs font-bold mb-1">Reward Code</label>
+                  <input type="text" id="admin-sub-reward-code" placeholder="e.g., REWARD8" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold uppercase focus:outline-none" />
+                </div>
+                <label class="inline-flex items-center gap-2 py-2 text-xs font-bold cursor-pointer">
+                  <input type="checkbox" id="admin-sub-has-reward" checked class="rounded text-indigo-600" />
+                  <span>Enable Reward</span>
+                </label>
+              </div>
+              <button type="submit" id="admin-sub-submit-btn" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-sm transition">
+                + Add Subject to Matrix
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Subjects Table (8 cols) -->
+        <div class="lg:col-span-8 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <h3 class="text-base font-black text-slate-900 dark:text-white">Configured Subjects & Allocation Weights</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Total Allocated Percentage: <strong id="admin-total-pct-badge" class="font-mono text-indigo-500">68.20%</strong> of Available Study Time (S)</p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-xs text-left border-collapse tabular-nums">
+              <thead class="bg-slate-100 dark:bg-obsidian-850 text-slate-700 dark:text-slate-200 font-extrabold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="px-3 py-2.5">CODE</th>
+                  <th class="px-3 py-2.5">SUBJECT NAME</th>
+                  <th class="px-3 py-2.5 text-right">WEIGHT %</th>
+                  <th class="px-3 py-2.5">LINKED REWARD</th>
+                  <th class="px-3 py-2.5 text-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="admin-subjects-tbody" class="divide-y divide-slate-200/80 dark:divide-slate-800/80"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: VIDEO CREATION MANAGER (FULL ADD / EDIT / DELETE + PREVIEW)    -->
+    <!-- ===================================================================== -->
+    <div id="tab-videos" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Add / Edit Video Form (5 cols) -->
+        <div class="lg:col-span-5 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-rose-500/25 shadow-sm h-fit min-w-0">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <span class="text-[10px] font-extrabold uppercase tracking-widest text-rose-500">Video Vault CRUD</span>
+              <h3 id="admin-vid-form-title" class="text-base font-black text-slate-900 dark:text-white">Add Video to Archive</h3>
+            </div>
+            <button type="button" id="admin-vid-cancel-btn" onclick="resetAdminVideoForm()" class="hidden text-xs font-bold text-slate-400 hover:text-rose-500">Cancel Edit</button>
+          </div>
+
+          <form id="admin-video-form" class="space-y-3">
+            <input type="hidden" id="admin-vid-edit-id" />
+
+            <div>
+              <label class="block text-xs font-bold mb-1">Option 1: YouTube Video Link</label>
+              <input type="text" id="admin-vid-url" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">Option 2: Paste YouTube Embed Code (&lt;iframe&gt;...&lt;/iframe&gt;)</label>
+              <textarea id="admin-vid-embed" rows="2" placeholder='<iframe src="https://www.youtube.com/embed/..." ...></iframe>' class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">Option 3: Local Video File (.mp4 / .webm / .mkv)</label>
+              <input type="file" id="admin-vid-file" accept="video/*" class="w-full px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white cursor-pointer" />
+            </div>
+
+            <!-- Live In-Page Preview -->
+            <div id="admin-vid-preview-wrap" class="hidden rounded-xl overflow-hidden border border-slate-700 bg-black">
+              <div id="admin-vid-preview-slot" class="aspect-video w-full"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs font-bold mb-1">Subject Code</label>
+                <input type="text" id="admin-vid-subject" value="INT108" required placeholder="e.g., INT108" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold uppercase focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Date</label>
+                <input type="date" id="admin-vid-date" required class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold focus:outline-none" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+              <div class="col-span-2">
+                <label class="block text-xs font-bold mb-1">Video Title / Topic</label>
+                <input type="text" id="admin-vid-title" required placeholder="Lecture title..." class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-semibold focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Duration (m)</label>
+                <input type="number" id="admin-vid-mins" min="0" value="15" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold focus:outline-none" />
+              </div>
+            </div>
+
+            <button type="submit" id="admin-vid-submit-btn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-extrabold shadow-sm transition">
+              + Save Video Entry
+            </button>
+          </form>
+        </div>
+
+        <!-- Video Archive Grid with Edit & Delete (7 cols) -->
+        <div class="lg:col-span-7 space-y-4 min-w-0">
+          <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-wrap items-center justify-between gap-2">
+            <input type="text" id="admin-vid-search" placeholder="Search title or subject..." class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 text-xs flex-1 min-w-[160px] focus:outline-none" />
+            <input type="date" id="admin-vid-filter-date" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold focus:outline-none" />
+            <button type="button" onclick="document.getElementById('admin-vid-search').value=''; document.getElementById('admin-vid-filter-date').value=''; renderAdminVideosTab();" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">
+              Reset Filter
+            </button>
+          </div>
+
+          <div id="admin-videos-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 5: PROFIT & PNL CONTROL PANEL (FULL ADD / EDIT / DELETE + CHARTS) -->
+    <!-- ===================================================================== -->
+    <div id="tab-profit" class="tab-panel hidden space-y-6">
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-6 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
+          <h3 class="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-white mb-3">DAILY DATA (DAILY PNL)</h3>
+          <div class="h-60 w-full"><canvas id="adminDailyPnlChart"></canvas></div>
+        </div>
+        <div class="lg:col-span-6 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
+          <h3 class="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-white mb-3">WITHDRAWN ACCUMULATED PROFIT</h3>
+          <div class="h-60 w-full"><canvas id="adminAccumProfitChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- CRUD Form + Latest-First Ledger Table -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Add / Modify Ledger Entry Form (4 cols) -->
+        <div class="lg:col-span-4 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm h-fit min-w-0">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-500">Ledger CRUD Controller</span>
+              <h3 id="admin-pnl-form-title" class="text-base font-black text-slate-900 dark:text-white">Add Session / Adjustment</h3>
+            </div>
+            <button type="button" id="admin-pnl-cancel-btn" onclick="resetAdminPnlForm()" class="hidden text-xs font-bold text-slate-400 hover:text-rose-500">Cancel Edit</button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 mb-3 text-xs font-bold">
+            <button type="button" id="admin-pnl-mode-play" onclick="setAdminPnlMode('playing')" class="py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm">By Playing Amt</button>
+            <button type="button" id="admin-pnl-mode-dir" onclick="setAdminPnlMode('direct')" class="py-1.5 rounded-lg text-slate-500 dark:text-slate-400">Direct PNL (+/-)</button>
+          </div>
+
+          <form id="admin-pnl-form" class="space-y-3">
+            <input type="hidden" id="admin-pnl-edit-id" />
+
+            <div>
+              <label class="block text-xs font-bold mb-1 flex items-center justify-between">
+                <span>Date (Past, Today, or Future)</span>
+                <button type="button" onclick="advanceAdminPnlDate()" class="text-[11px] font-mono font-bold text-indigo-500 hover:underline">+1 Day</button>
+              </label>
+              <input type="date" id="admin-pnl-date" required class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-indigo-500 mb-1">Starting Playing Amount</label>
+              <input type="number" id="admin-pnl-start-play" step="any" min="0" value="21275" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-indigo-500/30 text-xs font-mono font-extrabold focus:outline-none" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-rose-500 mb-1">Withdrawal (−)</label>
+                <input type="number" id="admin-pnl-withdraw" step="any" min="0" value="0" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold text-rose-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-sky-500 mb-1">Deposit (+)</label>
+                <input type="number" id="admin-pnl-deposit" step="any" min="0" value="0" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold text-sky-500 focus:outline-none" />
+              </div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-xs">
+              <span class="font-bold text-amber-600 dark:text-amber-300">Expected Playing Amt:</span>
+              <span id="admin-pnl-expected-preview" class="font-mono font-black">21,275</span>
+            </div>
+
+            <div id="admin-pnl-playing-wrap">
+              <label class="block text-xs font-bold mb-1">Actual Playing Amount After Session</label>
+              <input type="number" id="admin-pnl-close-play" step="any" placeholder="e.g., 22500" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-extrabold text-indigo-500 focus:outline-none" />
+            </div>
+
+            <div id="admin-pnl-direct-wrap" class="hidden">
+              <label class="block text-xs font-bold mb-1">Direct Daily PNL (+ / −)</label>
+              <input type="number" id="admin-pnl-direct-val" step="any" placeholder="e.g., 1500 or -800" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-mono font-extrabold focus:outline-none" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs font-bold mb-1">Highlight</label>
+                <select id="admin-pnl-highlight" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs font-bold focus:outline-none">
+                  <option value="none">Standard</option>
+                  <option value="yellow">Yellow Milestone</option>
+                  <option value="green">Green Tag</option>
+                  <option value="red">Red Alert Tag</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">Note</label>
+                <input type="text" id="admin-pnl-note" placeholder="Optional note..." class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-xs focus:outline-none" />
+              </div>
+            </div>
+
+            <button type="submit" id="admin-pnl-submit-btn" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-sm transition">
+              + Save Ledger Entry
+            </button>
+          </form>
+        </div>
+
+        <!-- Latest-First Ledger Table with Edit & Delete Buttons (8 cols) -->
+        <div class="lg:col-span-8 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col min-w-0">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-base font-black text-slate-900 dark:text-white">Full Profit & Playing Ledger (Add / Modify / Delete)</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Latest dates appear at the top. Edit or delete any row with automatic recalculation.</p>
+            </div>
+            <input type="text" id="admin-pnl-search" placeholder="Search date or note..." class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none" />
+          </div>
+
+          <div class="overflow-x-auto overflow-y-auto max-h-[540px] rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-xs text-right border-collapse tabular-nums">
+              <thead class="sticky top-0 z-10 bg-slate-100 dark:bg-obsidian-850 text-slate-700 dark:text-slate-200 font-extrabold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th class="px-2 py-2.5 text-center">#</th>
+                  <th class="px-3 py-2.5 text-left">DATE</th>
+                  <th class="px-2 py-2.5">W / D</th>
+                  <th class="px-2 py-2.5">EXPECTED</th>
+                  <th class="px-2 py-2.5">PLAYING</th>
+                  <th class="px-2 py-2.5">DAILY PNL</th>
+                  <th class="px-2.5 py-2.5 bg-rose-500/15 text-rose-500">PROFIT VAULT</th>
+                  <th class="px-2.5 py-2.5 text-center">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="admin-pnl-tbody" class="divide-y divide-slate-200/80 dark:divide-slate-800/80"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Confirmation Modal for Destructive Deletes -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-obsidian-900 rounded-2xl max-w-sm w-full p-6 border border-rose-500/30 shadow-2xl">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-500 flex items-center justify-center shrink-0">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <h3 id="confirm-modal-title" class="text-base font-black text-slate-900 dark:text-white">Confirm Delete</h3>
+      </div>
+      <p id="confirm-modal-msg" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-5">Are you sure you want to delete this record?</p>
+      <div class="flex items-center justify-end gap-2">
+        <button type="button" onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button>
+        <button type="button" id="confirm-modal-ok-btn" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-rose-600 hover:bg-rose-500 text-white shadow-sm">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * TIMEFLOW MIRROR CONTROL PANEL — SHARED SCHEMA & FULL CRUD ENGINE
+     * =========================================================================
+     */
+
+    const PRIMARY_STORAGE_KEY = 'timeflow_command_center_v12';
+    const LEGACY_STORAGE_KEY = 'timeflow_dashboard_v1';
+    const DEFAULT_TODAY = '2026-11-21';
+    const IS_FILE_PROTOCOL = window.location.protocol === 'file:';
+    const DEFAULT_PLAYER_ENGINE = IS_FILE_PROTOCOL ? 'mirror1' : 'youtube';
+
+    const DEFAULT_SUBJECT_CONFIG = {
+      rewardRatio: 0.25,
+      subjects: [
+        { id: 'INT108', code: 'INT108', name: 'Python Programming', pct: 19.0, hasReward: true, rewardCode: 'REWARD1', color: 'indigo' },
+        { id: 'MTH165', code: 'MTH165', name: 'Mathematics', pct: 11.55, hasReward: true, rewardCode: 'REWARD2', color: 'sky' },
+        { id: 'TRADING', code: 'TRADING', name: 'Trading & Market Analysis', pct: 3.81, hasReward: false, rewardCode: null, color: 'orange' },
+        { id: 'CSE326', code: 'CSE326', name: 'Web Engineering', pct: 15.48, hasReward: true, rewardCode: 'REWARD4', color: 'violet' },
+        { id: 'MEC136', code: 'MEC136', name: 'Engineering Mechanics', pct: 7.74, hasReward: true, rewardCode: 'REWARD5', color: 'teal' },
+        { id: 'CSE111', code: 'CSE111', name: 'Orientation to Computing', pct: 3.81, hasReward: true, rewardCode: 'REWARD6', color: 'blue' },
+        { id: 'INT335', code: 'INT335', name: 'Data Structures / Core', pct: 3.81, hasReward: true, rewardCode: 'REWARD7', color: 'emerald' },
+        { id: 'VIDEO_EU', code: 'VIDEO E+U', name: 'Video Edits & Uploads', pct: 3.0, hasReward: false, rewardCode: null, color: 'amber' }
+      ]
+    };
+
+    function createDefaultFixedRoutines() {
+      return [
+        { id: 'fixed-freshup', name: 'Fresh up & Brush', category: 'fixed', icon: '🪥', startTime: '07:00', endTime: '07:30', description: 'Morning hygiene, fresh up, and hydration.', completed: false, completionNote: '' },
+        { id: 'fixed-breakfast', name: 'Breakfast', category: 'fixed', icon: '🍳', startTime: '08:30', endTime: '09:00', description: 'Healthy morning meal before classes.', completed: false, completionNote: '' },
+        { id: 'fixed-lunch', name: 'Lunch', category: 'fixed', icon: '🥗', startTime: '13:00', endTime: '13:45', description: 'Midday meal & short digestion rest.', completed: false, completionNote: '' },
+        { id: 'fixed-dinner', name: 'Dinner', category: 'fixed', icon: '🍽️', startTime: '20:30', endTime: '21:15', description: 'Evening dinner & wind down.', completed: false, completionNote: '' }
+      ];
+    }
+
+    function createInitialProfitEntries() {
+      const rawRows = [
+        { date: '2026-09-03', pnl: -2700, capAdj: 5000, highlight: 'yellow' },
+        { date: '2026-09-18', pnl: 2100, capAdj: 27600, highlight: 'yellow' },
+        { date: '2026-09-19', pnl: -1700, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-20', pnl: -1100, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-21', pnl: 237, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-22', pnl: 1900, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-23', pnl: 0, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-24', pnl: 18064, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-25', pnl: 0, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-26', pnl: 0, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-27', pnl: 0, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-28', pnl: 12000, capAdj: 5300, highlight: 'none' },
+        { date: '2026-09-29', pnl: 0, capAdj: 0, highlight: 'none' },
+        { date: '2026-09-30', pnl: 5086, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-01', pnl: 7042, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-02', pnl: 2502, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-03', pnl: 8260, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-04', pnl: 2106, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-05', pnl: 4133, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-06', pnl: 2466, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-07', pnl: 0, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-08', pnl: 4950, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-09', pnl: 6145, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-10', pnl: 2898, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-11', pnl: 874, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-12', pnl: 3656, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-13', pnl: 2073, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-14', pnl: 2919, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-15', pnl: -6247, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-16', pnl: 2899, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-17', pnl: 0, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-18', pnl: 5589, capAdj: 0, highlight: 'yellow' },
+        { date: '2026-10-19', pnl: 2329, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-20', pnl: 2329, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-21', pnl: 1626, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-22', pnl: 1626, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-23', pnl: 755, capAdj: 0, highlight: 'red' },
+        { date: '2026-10-24', pnl: 755, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-25', pnl: 1631, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-26', pnl: 1631, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-27', pnl: 2365, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-28', pnl: 3036, capAdj: 0, highlight: 'green' },
+        { date: '2026-10-29', pnl: 2692, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-30', pnl: 2962, capAdj: 0, highlight: 'none' },
+        { date: '2026-10-31', pnl: 3640, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-01', pnl: 4985, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-02', pnl: 1646, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-03', pnl: 2121, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-04', pnl: 2381, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-05', pnl: 88, capAdj: 0, highlight: 'red' },
+        { date: '2026-11-06', pnl: 88, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-07', pnl: 88, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-08', pnl: 5864, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-09', pnl: 7170, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-10', pnl: 10, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-11', pnl: 10, capAdj: 100, highlight: 'green' },
+        { date: '2026-11-12', pnl: 2335, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-13', pnl: 2293, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-14', pnl: 3109, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-15', pnl: 2615, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-16', pnl: 1108, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-17', pnl: 1108, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-18', pnl: -56, capAdj: 93, highlight: 'yellow' },
+        { date: '2026-11-19', pnl: -56, capAdj: 0, highlight: 'none' },
+        { date: '2026-11-20', pnl: -293, capAdj: -95, highlight: 'none', note: 'Withdrawn Profit Vault: 188,141 | Playing Wallet: 21,275' }
+      ];
+
+      return rawRows.map((r, i) => ({
+        id: `pnl-seed-${i + 1}`,
+        date: r.date,
+        pnl: r.pnl,
+        capAdj: r.capAdj,
+        withdrawal: 0,
+        deposit: 0,
+        startingPlayingAmt: 21275,
+        closingPlayingAmt: 21275,
+        highlight: r.highlight,
+        note: r.note || ''
+      }));
+    }
+
+    function createInitialSeedData() {
+      const nov21Routines = createDefaultFixedRoutines();
+      nov21Routines[0].completed = true;
+      nov21Routines[0].completionNote = 'Done fresh up & warm water';
+      nov21Routines[1].completed = true;
+      nov21Routines[1].completionNote = 'Done breakfast, Fig + 1 small banana shake';
+
+      return {
+        config: JSON.parse(JSON.stringify(DEFAULT_SUBJECT_CONFIG)),
+        videos: [
+          {
+            id: 'vid-seed-1',
+            date: '2026-11-19',
+            youtubeId: 'rfscVS0vtbw',
+            url: 'https://www.youtube.com/watch?v=rfscVS0vtbw',
+            preferredEngine: DEFAULT_PLAYER_ENGINE,
+            title: 'INT108 — Python Fundamentals & Problem Solving Lecture',
+            subjectCode: 'INT108',
+            taskLabel: '5. Video Lecture Making (10%)',
+            durationMins: 15
+          }
+        ],
+        profitLedger: createInitialProfitEntries(),
+        days: {
+          '2026-11-19': {
+            date: '2026-11-19',
+            sleepHours: 10.65,
+            classesCount: 3,
+            tasks: createDefaultFixedRoutines().map(r => ({ ...r, completed: true, completionNote: 'Done' })),
+            completedSubjects: ['INT108', 'REWARD1', 'MTH165', 'REWARD2', 'CSE326', 'MEC136'],
+            studyProgress: {
+              INT108: { completedSteps: ['newConcept', 'todayProb', 'pDayProb', 'pWeekProb', 'video'], spentMins: 34 },
+              MTH165: { completedSteps: ['newConcept', 'todayProb', 'pDayProb', 'pWeekProb', 'video'], spentMins: 21 },
+              CSE326: { completedSteps: ['newConcept', 'todayProb', 'pDayProb', 'pWeekProb', 'video'], spentMins: 28 },
+              MEC136: { completedSteps: ['newConcept', 'todayProb', 'pDayProb', 'pWeekProb', 'video'], spentMins: 14 }
+            }
+          },
+          '2026-11-20': {
+            date: '2026-11-20',
+            sleepHours: 9.5,
+            classesCount: 4,
+            tasks: createDefaultFixedRoutines(),
+            completedSubjects: ['INT108'],
+            studyProgress: {
+              INT108: { completedSteps: ['newConcept', 'todayProb', 'pDayProb', 'pWeekProb', 'video'], spentMins: 91 }
+            }
+          },
+          '2026-11-21': {
+            date: '2026-11-21',
+            sleepHours: 7.5,
+            classesCount: 3,
+            tasks: nov21Routines,
+            completedSubjects: [],
+            studyProgress: {}
+          }
+        }
+      };
+    }
+
+    function normalizeStateSchema(rawObj) {
+      const obj = rawObj && rawObj.data ? rawObj.data : rawObj;
+      if (!obj || typeof obj !== 'object') return createInitialSeedData();
+      if (!obj.config || !Array.isArray(obj.config.subjects)) {
+        obj.config = JSON.parse(JSON.stringify(DEFAULT_SUBJECT_CONFIG));
+      }
+      if (!obj.days || typeof obj.days !== 'object') {
+        obj.days = {};
+      }
+      if (!Array.isArray(obj.videos)) {
+        obj.videos = [];
+      }
+      if (!Array.isArray(obj.profitLedger) || obj.profitLedger.length === 0) {
+        obj.profitLedger = Array.isArray(obj.profitEntries) && obj.profitEntries.length > 0
+          ? obj.profitEntries
+          : createInitialProfitEntries();
+      }
+      return obj;
+    }
+
+    function loadSyncedState() {
+      try {
+        const primaryRaw = localStorage.getItem(PRIMARY_STORAGE_KEY);
+        if (primaryRaw) return normalizeStateSchema(JSON.parse(primaryRaw));
+        const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacyRaw) return normalizeStateSchema(JSON.parse(legacyRaw));
+      } catch (e) {
+        console.error('Storage read error:', e);
+      }
+      const seeded = createInitialSeedData();
+      saveAllSyncedKeys(seeded);
+      return seeded;
+    }
+
+    function saveAllSyncedKeys(stateObj = appState) {
+      try {
+        const serialized = JSON.stringify(stateObj);
+        localStorage.setItem(PRIMARY_STORAGE_KEY, serialized);
+        localStorage.setItem(LEGACY_STORAGE_KEY, serialized);
+      } catch (e) {
+        console.error('Storage save error:', e);
+      }
+    }
+
+    let appState = loadSyncedState();
+    let activeScheduleDate = DEFAULT_TODAY;
+    let adminPnlMode = 'playing';
+    let pendingConfirmCallback = null;
+    const localBlobMap = {};
+    let adminDailyChart = null;
+    let adminAccumChart = null;
+
+    // Cross-tab live sync listener
+    window.addEventListener('storage', e => {
+      if (e.key === PRIMARY_STORAGE_KEY || e.key === LEGACY_STORAGE_KEY) {
+        appState = loadSyncedState();
+        renderAll();
+        showToast('Live synced changes from TimeFlow Command Center!');
+      }
+    });
+
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const cls = type === 'error'
+        ? 'bg-rose-600 text-white border-rose-400/30'
+        : 'bg-slate-900/95 dark:bg-obsidian-800/95 text-white border-amber-500/30';
+      toast.className = `${cls} border backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 transition-all duration-300 translate-y-2 opacity-0`;
+      toast.innerHTML = `<span>${type === 'error' ? '⚠️' : '⚡'}</span><span>${msg}</span>`;
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function confirmAction(title, msg, onConfirm) {
+      pendingConfirmCallback = onConfirm;
+      document.getElementById('confirm-modal-title').textContent = title;
+      document.getElementById('confirm-modal-msg').textContent = msg;
+      const modal = document.getElementById('confirm-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+      pendingConfirmCallback = null;
+      const modal = document.getElementById('confirm-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    /**
+     * =========================================================================
+     * JSON IMPORT / EXPORT & RAW STATE EDITOR
+     * =========================================================================
+     */
+
+    function exportSyncedJson() {
+      const payload = {
+        appName: 'TimeFlow Command Center',
+        version: '12.0',
+        exportedAt: new Date().toISOString(),
+        data: appState
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `timeflow-synced-mirror-${activeScheduleDate}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Exported Synced JSON! Load via "Restore" in Command Center.');
+    }
+
+    function triggerImportJson() {
+      const inp = document.getElementById('import-json-input');
+      inp.value = '';
+      inp.click();
+    }
+
+    function refreshRawJsonEditor() {
+      const ta = document.getElementById('raw-json-textarea');
+      if (ta) ta.value = JSON.stringify(appState, null, 2);
+    }
+
+    function applyRawJsonChanges() {
+      try {
+        const parsed = JSON.parse(document.getElementById('raw-json-textarea').value);
+        appState = normalizeStateSchema(parsed);
+        saveAllSyncedKeys();
+        renderAll();
+        showToast('Raw JSON applied & synced to storage!');
+      } catch (e) {
+        showToast('Invalid JSON syntax: ' + e.message, 'error');
+      }
+    }
+
+    /**
+     * =========================================================================
+     * SHARED CALCULATIONS (TIME, STUDY DIVISION, YOUTUBE & PROFIT ENGINE)
+     * =========================================================================
+     */
+
+    function timeToMinutes(hhmm) {
+      if (!hhmm || !hhmm.includes(':')) return 0;
+      const [h, m] = hhmm.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function getTaskDurationMinutes(task) {
+      const s = timeToMinutes(task.startTime);
+      let e = timeToMinutes(task.endTime);
+      if (e < s) e += 24 * 60;
+      return Math.max(0, e - s);
+    }
+
+    function getOrCreateDay(dateStr) {
+      if (!appState.days[dateStr]) {
+        appState.days[dateStr] = {
+          date: dateStr,
+          sleepHours: 7.5,
+          classesCount: 3,
+          tasks: createDefaultFixedRoutines(),
+          completedSubjects: [],
+          studyProgress: {}
+        };
+        saveAllSyncedKeys();
+      }
+      if (!appState.days[dateStr].studyProgress) appState.days[dateStr].studyProgress = {};
+      if (!Array.isArray(appState.days[dateStr].completedSubjects)) appState.days[dateStr].completedSubjects = [];
+      return appState.days[dateStr];
+    }
+
+    function calculateDayMetrics(dayData) {
+      const sleepHrs = Math.max(0, Number(dayData.sleepHours) || 0);
+      const classesHrs = Math.max(0, Number(dayData.classesCount) || 0);
+      let taskMins = 0;
+      (dayData.tasks || []).forEach(t => { taskMins += getTaskDurationMinutes(t); });
+      const availableHrs = Math.max(0, Number((24 - sleepHrs - classesHrs - taskMins / 60).toFixed(2)));
+      const availableMins = Math.round(availableHrs * 60);
+      const rewardRatio = appState.config.rewardRatio ?? 0.25;
+
+      const allocations = appState.config.subjects.map(sub => {
+        const mainMins = Math.round(availableHrs * (sub.pct / 100) * 60);
+        const rewardMins = sub.hasReward ? Math.round(mainMins * rewardRatio) : 0;
+        return { ...sub, mainMins, rewardMins };
+      });
+
+      return { availableHrs, availableMins, allocations };
+    }
+
+    function calculateStudyDivision(totalMins) {
+      const m = Math.max(0, Math.round(totalMins));
+      const newConcept = Math.round(m * 0.15);
+      const todayProb = Math.round(m * 0.25);
+      const pDayProb = Math.round(m * 0.30);
+      const pWeekProb = Math.round(m * 0.20);
+      const video = Math.max(0, m - (newConcept + todayProb + pDayProb + pWeekProb));
+      return { total: m, newConcept, todayProb, pDayProb, pWeekProb, video };
+    }
+
+    function extractYouTubeId(input) {
+      if (!input) return null;
+      const trimmed = String(input).trim();
+      if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+      try {
+        const norm = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+        const urlObj = new URL(norm);
+        const host = urlObj.hostname.replace(/^www\./i, '').toLowerCase();
+        if (host === 'youtu.be') {
+          const seg = urlObj.pathname.split('/').filter(Boolean)[0];
+          if (seg && /^[a-zA-Z0-9_-]{11}$/.test(seg)) return seg;
+        }
+        if (host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')) {
+          const v = urlObj.searchParams.get('v');
+          if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+          const parts = urlObj.pathname.split('/').filter(Boolean);
+          if (parts.length >= 2 && ['shorts', 'live', 'embed', 'v', 'watch'].includes(parts[0])) {
+            if (/^[a-zA-Z0-9_-]{11}$/.test(parts[1])) return parts[1];
+          }
+        }
+      } catch (e) {}
+      const match = trimmed.match(/(?:v=|\/shorts\/|\/live\/|\/embed\/|\/v\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      return match ? match[1] : null;
+    }
+
+    function buildEngineEmbedUrl(videoId, engine = DEFAULT_PLAYER_ENGINE) {
+      const id = encodeURIComponent(videoId);
+      if (engine === 'mirror1') return `https://inv.nadeko.net/embed/${id}?controls=1&quality=dash`;
+      if (engine === 'mirror2') return `https://yewtu.be/embed/${id}?controls=1`;
+      if (engine === 'mirror3') return `https://invidious.nerdvpn.de/embed/${id}?controls=1`;
+      return `https://www.youtube.com/embed/${id}?controls=1&rel=0&playsinline=1`;
+    }
+
+    function parseVideoInputs(linkStr, embedStr) {
+      let id = null;
+      const emb = (embedStr || '').trim();
+      if (emb) {
+        const srcM = emb.match(/src\s*=\s*["']([^"']+)["']/i);
+        id = extractYouTubeId(srcM ? srcM[1] : emb);
+      }
+      const lnk = (linkStr || '').trim();
+      if (!id && lnk) id = extractYouTubeId(lnk);
+      if (!id) return null;
+      return {
+        videoId: id,
+        watchUrl: lnk && /^https?:\/\//i.test(lnk) && !lnk.includes('/embed/') ? lnk : `https://www.youtube.com/watch?v=${id}`,
+        embedSrc: buildEngineEmbedUrl(id, DEFAULT_PLAYER_ENGINE)
+      };
+    }
+
+    function computeProfitSeries() {
+      const sorted = [...(appState.profitLedger || [])].sort((a, b) => {
+        const c = a.date.localeCompare(b.date);
+        return c !== 0 ? c : String(a.id).localeCompare(String(b.id));
+      });
+      let withdrawnVault = 0;
+      let playingWallet = 21275;
+
+      return sorted.map((entry, idx) => {
+        const capAdj = Number(entry.capAdj) || 0;
+        const withdrawal = Math.max(0, Number(entry.withdrawal) || 0);
+        const deposit = Math.max(0, Number(entry.deposit) || 0);
+
+        if (idx < 65 && String(entry.id).startsWith('pnl-seed-')) {
+          const pnl = Number(entry.pnl) || 0;
+          withdrawnVault = Number((withdrawnVault + capAdj + pnl).toFixed(2));
+          playingWallet = 21275;
+          return {
+            ...entry,
+            dayIndex: idx + 1,
+            pnl,
+            withdrawal: 0,
+            deposit: 0,
+            startingPlayingAmt: 21275,
+            expectedPlayingAmt: 21275,
+            closingPlayingAmt: 21275,
+            accumulatedProfit: withdrawnVault
+          };
+        }
+
+        const startPlay = (entry.startingPlayingAmt !== null && entry.startingPlayingAmt !== undefined && entry.startingPlayingAmt !== '')
+          ? Number(entry.startingPlayingAmt)
+          : playingWallet;
+        const expectedPlayingAmt = Number((startPlay - withdrawal + deposit).toFixed(2));
+
+        let dailyPnl = 0;
+        let closingPlayingAmt = expectedPlayingAmt;
+
+        if (entry.closingPlayingAmt !== null && entry.closingPlayingAmt !== undefined && entry.closingPlayingAmt !== '') {
+          closingPlayingAmt = Number(entry.closingPlayingAmt);
+          dailyPnl = Number((closingPlayingAmt - expectedPlayingAmt).toFixed(2));
+        } else {
+          dailyPnl = Number(entry.pnl) || 0;
+          closingPlayingAmt = Number((expectedPlayingAmt + dailyPnl).toFixed(2));
+        }
+
+        withdrawnVault = Number((withdrawnVault + dailyPnl).toFixed(2));
+        playingWallet = closingPlayingAmt;
+
+        return {
+          ...entry,
+          dayIndex: idx + 1,
+          pnl: dailyPnl,
+          withdrawal,
+          deposit,
+          startingPlayingAmt: startPlay,
+          expectedPlayingAmt,
+          closingPlayingAmt,
+          accumulatedProfit: withdrawnVault
+        };
+      });
+    }
+
+    function formatSigned(n) {
+      const val = Number(n) || 0;
+      const abs = Math.abs(val).toLocaleString(undefined, { maximumFractionDigits: 2 });
+      return val > 0 ? `+${abs}` : val < 0 ? `-${abs}` : '0';
+    }
+
+    function formatDDMMYYYY(iso) {
+      if (!iso || !iso.includes('-')) return iso;
+      const [y, m, d] = iso.split('-');
+      return `${d}-${m}-${y}`;
+    }
+
+    /**
+     * =========================================================================
+     * RENDERING ALL ADMIN TABS
+     * =========================================================================
+     */
+
+    function renderAll() {
+      const dayKeys = Object.keys(appState.days || {});
+      const series = computeProfitSeries();
+      const latest = series.length > 0 ? series[series.length - 1] : null;
+      const vaultVal = latest ? latest.accumulatedProfit : 188141;
+      const walletVal = latest ? latest.closingPlayingAmt : 21275;
+
+      document.getElementById('kpi-total-days').textContent = dayKeys.length;
+      document.getElementById('kpi-total-subjects').textContent = appState.config.subjects.length;
+      document.getElementById('kpi-reward-ratio-sub').textContent = `Reward multiplier: ${Math.round((appState.config.rewardRatio || 0.25) * 100)}%`;
+      document.getElementById('kpi-total-videos').textContent = appState.videos.length;
+      document.getElementById('kpi-withdrawn-profit').textContent = Math.round(vaultVal).toLocaleString();
+      document.getElementById('kpi-playing-wallet').textContent = Math.round(walletVal).toLocaleString();
+
+      document.getElementById('nav-video-badge').textContent = appState.videos.length;
+      document.getElementById('nav-pnl-badge').textContent = `${Math.round(vaultVal).toLocaleString()} | ${Math.round(walletVal).toLocaleString()}`;
+
+      refreshRawJsonEditor();
+      renderAdminScheduleTab();
+      renderAdminSubjectsTab();
+      renderAdminVideosTab();
+      renderAdminProfitTab();
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // --- TAB 2: SCHEDULE & STUDY OVERRIDES ---
+    function renderAdminScheduleTab() {
+      const dayData = getOrCreateDay(activeScheduleDate);
+      const metrics = calculateDayMetrics(dayData);
+
+      document.getElementById('admin-date-picker').value = activeScheduleDate;
+      document.getElementById('admin-sleep-input').value = dayData.sleepHours;
+      document.getElementById('admin-classes-input').value = dayData.classesCount;
+      document.getElementById('admin-avail-study-pill').textContent = `Available Study (S): ${metrics.availableHrs.toFixed(2)}h (${metrics.availableMins}m)`;
+
+      const dates = Object.keys(appState.days).sort().reverse();
+      document.getElementById('admin-saved-dates-pills').innerHTML = dates.map(d => `
+        <button type="button" onclick="activeScheduleDate='${d}'; renderAll();" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition ${
+          d === activeScheduleDate
+            ? 'bg-indigo-600 text-white shadow-sm'
+            : 'bg-slate-100 dark:bg-obsidian-850 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+        }">${d}</button>
+      `).join('');
+
+      // Timeline Tasks List
+      const sortedTasks = [...dayData.tasks].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+      document.getElementById('admin-tasks-list').innerHTML = sortedTasks.length === 0
+        ? `<div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-700 rounded-xl">No timeline tasks on ${activeScheduleDate}.</div>`
+        : sortedTasks.map(t => `
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="text-lg shrink-0">${t.icon || '⏱️'}</span>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-extrabold truncate ${t.completed ? 'line-through text-emerald-400' : ''}">${escapeHtml(t.name)}</span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.2 rounded ${t.category === 'fixed' ? 'bg-amber-500/15 text-amber-400' : 'bg-rose-500/15 text-rose-400'}">${t.category}</span>
+                </div>
+                <div class="text-[11px] font-mono text-indigo-400">${t.startTime} – ${t.endTime} (${getTaskDurationMinutes(t)}m)</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button type="button" onclick="editAdminTask('${t.id}')" title="Edit Task" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-slate-800">
+                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              </button>
+              <button type="button" onclick="deleteAdminTask('${t.id}')" title="Delete Task" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-800">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+      // Subject, Step & Reward Override Cards
+      document.getElementById('admin-study-overrides-list').innerHTML = metrics.allocations.map(sub => {
+        const div = calculateStudyDivision(sub.mainMins);
+        const prog = dayData.studyProgress[sub.id] || { completedSteps: [], spentMins: 0 };
+        const doneSet = new Set(prog.completedSteps || []);
+        const isMainApproved = dayData.completedSubjects.includes(sub.id);
+        const isRewardApproved = sub.hasReward && dayData.completedSubjects.includes(sub.rewardCode);
+
+        const steps = [
+          { key: 'newConcept', label: 'New Concept', mins: div.newConcept },
+          { key: 'todayProb', label: 'Today Prob', mins: div.todayProb },
+          { key: 'pDayProb', label: 'P.Day Prob', mins: div.pDayProb },
+          { key: 'pWeekProb', label: 'P.Week Prob', mins: div.pWeekProb },
+          { key: 'video', label: 'Video Making', mins: div.video }
+        ];
+
+        return `
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700/80 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-black font-mono text-indigo-400">${escapeHtml(sub.code)}</span>
+                <span class="text-xs font-bold ml-1.5">${escapeHtml(sub.name)} (${sub.mainMins}m)</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="toggleOverrideSubject('${sub.id}', ${sub.mainMins})" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition ${
+                  isMainApproved
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-200 dark:bg-obsidian-950 text-slate-600 dark:text-slate-300 border border-slate-600'
+                }">
+                  ${isMainApproved ? '✓ Subject Approved' : 'Approve Subject'}
+                </button>
+                ${sub.hasReward ? `
+                  <button type="button" onclick="toggleOverrideReward('${sub.rewardCode}')" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition ${
+                    isRewardApproved
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-slate-200 dark:bg-obsidian-950 text-amber-400 border border-amber-500/30'
+                  }">
+                    ${isRewardApproved ? `✓ ${sub.rewardCode}` : `Grant ${sub.rewardCode} (${sub.rewardMins}m)`}
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+              ${steps.map(st => {
+                const active = doneSet.has(st.key);
+                return `
+                  <button type="button" onclick="toggleOverrideStep('${sub.id}', '${st.key}', ${st.mins})" class="px-2 py-1 rounded-lg text-[10px] font-bold transition ${
+                    active
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-white dark:bg-obsidian-950 text-slate-400 border border-slate-700'
+                  }">
+                    ${active ? '✓' : '○'} ${st.label} (${st.mins}m)
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function editAdminTask(taskId) {
+      const dayData = getOrCreateDay(activeScheduleDate);
+      const t = dayData.tasks.find(item => item.id === taskId);
+      if (!t) return;
+      document.getElementById('admin-task-edit-id').value = t.id;
+      document.getElementById('admin-task-name').value = t.name;
+      document.getElementById('admin-task-category').value = t.category;
+      document.getElementById('admin-task-start').value = t.startTime;
+      document.getElementById('admin-task-end').value = t.endTime;
+      document.getElementById('admin-task-icon').value = t.icon || '⚡';
+      document.getElementById('admin-task-desc').value = t.description || '';
+      document.getElementById('admin-task-note').value = t.completionNote || '';
+      document.getElementById('admin-task-completed').checked = !!t.completed;
+      document.getElementById('admin-task-form-heading').textContent = `Editing: ${t.name}`;
+      document.getElementById('admin-task-submit-btn').textContent = 'Update Block';
+      document.getElementById('admin-task-cancel-btn').classList.remove('hidden');
+    }
+
+    function resetAdminTaskForm() {
+      document.getElementById('admin-task-edit-id').value = '';
+      document.getElementById('admin-task-name').value = '';
+      document.getElementById('admin-task-category').value = 'fixed';
+      document.getElementById('admin-task-start').value = '12:00';
+      document.getElementById('admin-task-end').value = '12:30';
+      document.getElementById('admin-task-desc').value = '';
+      document.getElementById('admin-task-note').value = '';
+      document.getElementById('admin-task-completed').checked = false;
+      document.getElementById('admin-task-form-heading').textContent = 'Add New Timeline Task';
+      document.getElementById('admin-task-submit-btn').textContent = '+ Save Block';
+      document.getElementById('admin-task-cancel-btn').classList.add('hidden');
+    }
+
+    function deleteAdminTask(taskId) {
+      const dayData = getOrCreateDay(activeScheduleDate);
+      dayData.tasks = dayData.tasks.filter(t => t.id !== taskId);
+      saveAllSyncedKeys();
+      renderAll();
+      showToast('Timeline block deleted!');
+    }
+
+    function deleteCurrentDayRecord() {
+      confirmAction(
+        `Delete Day Record (${activeScheduleDate})?`,
+        'This will permanently remove all timeline tasks and study progress stored for this date.',
+        () => {
+          delete appState.days[activeScheduleDate];
+          const remaining = Object.keys(appState.days).sort();
+          activeScheduleDate = remaining.length > 0 ? remaining[remaining.length - 1] : DEFAULT_TODAY;
+          saveAllSyncedKeys();
+          renderAll();
+          showToast('Day record deleted!');
+        }
+      );
+    }
+
+    function toggleOverrideSubject(subId, mainMins) {
+      const dayData = getOrCreateDay(activeScheduleDate);
+      const idx = dayData.completedSubjects.indexOf(subId);
+      if (idx >= 0) {
+        dayData.completedSubjects.splice(idx, 1);
+        dayData.studyProgress[subId] = { completedSteps: [], spentMins: 0 };
+        showToast(`Revoked approval for ${subId}`);
+      } else {
+        dayData.completedSubjects.push(subId);
+        dayData.studyProgress[subId] = {
+          completedSteps: ['newConcept', 'todayProb', 'pDayProb', 'pWeekProb', 'video'],
+          spentMins: mainMins
+        };
+        showToast(`Admin approved ${subId}!`);
+      }
+      saveAllSyncedKeys();
+      renderAll();
+    }
+
+    function toggleOverrideStep(subId, stepKey, stepMins) {
+      const dayData = getOrCreateDay(activeScheduleDate);
+      if (!dayData.studyProgress[subId]) dayData.studyProgress[subId] = { completedSteps: [], spentMins: 0 };
+      const prog = dayData.studyProgress[subId];
+      const idx = prog.completedSteps.indexOf(stepKey);
+      if (idx >= 0) {
+        prog.completedSteps.splice(idx, 1);
+        prog.spentMins = Math.max(0, (prog.spentMins || 0) - stepMins);
+        const sIdx = dayData.completedSubjects.indexOf(subId);
+        if (sIdx >= 0) dayData.completedSubjects.splice(sIdx, 1);
+      } else {
+        prog.completedSteps.push(stepKey);
+        prog.spentMins = (prog.spentMins || 0) + stepMins;
+        if (prog.completedSteps.length >= 5 && !dayData.completedSubjects.includes(subId)) {
+          dayData.completedSubjects.push(subId);
+        }
+      }
+      saveAllSyncedKeys();
+      renderAll();
+    }
+
+    function toggleOverrideReward(rewardCode) {
+      const dayData = getOrCreateDay(activeScheduleDate);
+      const idx = dayData.completedSubjects.indexOf(rewardCode);
+      if (idx >= 0) {
+        dayData.completedSubjects.splice(idx, 1);
+        showToast(`Revoked ${rewardCode}`);
+      } else {
+        dayData.completedSubjects.push(rewardCode);
+        showToast(`Granted ${rewardCode}!`);
+      }
+      saveAllSyncedKeys();
+      renderAll();
+    }
+
+    // --- TAB 3: SUBJECT & RATIO CRUD ---
+    function renderAdminSubjectsTab() {
+      document.getElementById('admin-reward-pct-input').value = Math.round((appState.config.rewardRatio ?? 0.25) * 100);
+      const totalPct = appState.config.subjects.reduce((acc, s) => acc + (Number(s.pct) || 0), 0);
+      document.getElementById('admin-total-pct-badge').textContent = `${totalPct.toFixed(2)}%`;
+
+      document.getElementById('admin-subjects-tbody').innerHTML = appState.config.subjects.map(sub => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-obsidian-850/80">
+          <td class="px-3 py-2.5 font-mono font-black text-indigo-500">${escapeHtml(sub.code)}</td>
+          <td class="px-3 py-2.5 font-semibold">${escapeHtml(sub.name)}</td>
+          <td class="px-3 py-2.5 text-right font-mono font-bold">${sub.pct}%</td>
+          <td class="px-3 py-2.5 font-mono text-[11px]">
+            ${sub.hasReward ? `<span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 font-bold">🎁 ${escapeHtml(sub.rewardCode || 'REWARD')}</span>` : '<span class="text-slate-400">None</span>'}
+          </td>
+          <td class="px-3 py-2.5 text-right space-x-1">
+            <button type="button" onclick="editAdminSubject('${sub.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-slate-800" title="Edit Subject">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            </button>
+            <button type="button" onclick="deleteAdminSubject('${sub.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-800" title="Delete Subject">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function saveGlobalRewardRatio() {
+      const pct = Math.min(100, Math.max(0, Number(document.getElementById('admin-reward-pct-input').value) || 25));
+      appState.config.rewardRatio = pct / 100;
+      saveAllSyncedKeys();
+      renderAll();
+      showToast(`Reward multiplier updated to ${pct}%!`);
+    }
+
+    function editAdminSubject(subId) {
+      const sub = appState.config.subjects.find(s => s.id === subId);
+      if (!sub) return;
+      document.getElementById('admin-sub-edit-id').value = sub.id;
+      document.getElementById('admin-sub-code').value = sub.code;
+      document.getElementById('admin-sub-pct').value = sub.pct;
+      document.getElementById('admin-sub-name').value = sub.name;
+      document.getElementById('admin-sub-reward-code').value = sub.rewardCode || '';
+      document.getElementById('admin-sub-has-reward').checked = !!sub.hasReward;
+      document.getElementById('admin-sub-form-title').textContent = `Editing ${sub.code}`;
+      document.getElementById('admin-sub-submit-btn').textContent = 'Save Subject Changes';
+      document.getElementById('admin-sub-cancel-btn').classList.remove('hidden');
+    }
+
+    function resetAdminSubjectForm() {
+      document.getElementById('admin-sub-edit-id').value = '';
+      document.getElementById('admin-sub-code').value = '';
+      document.getElementById('admin-sub-pct').value = '';
+      document.getElementById('admin-sub-name').value = '';
+      document.getElementById('admin-sub-reward-code').value = '';
+      document.getElementById('admin-sub-has-reward').checked = true;
+      document.getElementById('admin-sub-form-title').textContent = 'Add New Subject';
+      document.getElementById('admin-sub-submit-btn').textContent = '+ Add Subject to Matrix';
+      document.getElementById('admin-sub-cancel-btn').classList.add('hidden');
+    }
+
+    function deleteAdminSubject(subId) {
+      confirmAction(
+        `Delete Subject (${subId})?`,
+        'This removes the subject from your 24h allocation formula across all dates.',
+        () => {
+          appState.config.subjects = appState.config.subjects.filter(s => s.id !== subId);
+          saveAllSyncedKeys();
+          renderAll();
+          showToast(`Deleted subject ${subId}`);
+        }
+      );
+    }
+
+    // --- TAB 4: VIDEO CREATION MANAGER ---
+    function updateAdminVideoPreview() {
+      const fileInp = document.getElementById('admin-vid-file');
+      const localFile = fileInp && fileInp.files && fileInp.files[0];
+      const wrap = document.getElementById('admin-vid-preview-wrap');
+      const slot = document.getElementById('admin-vid-preview-slot');
+
+      if (localFile) {
+        wrap.classList.remove('hidden');
+        const url = URL.createObjectURL(localFile);
+        slot.innerHTML = `<video class="w-full h-full" src="${escapeHtml(url)}" controls playsinline></video>`;
+        return;
+      }
+
+      const parsed = parseVideoInputs(
+        document.getElementById('admin-vid-url').value,
+        document.getElementById('admin-vid-embed').value
+      );
+      if (parsed) {
+        wrap.classList.remove('hidden');
+        slot.innerHTML = `<iframe class="w-full h-full" src="${escapeHtml(parsed.embedSrc)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      } else {
+        wrap.classList.add('hidden');
+        slot.innerHTML = '';
+      }
+    }
+
+    function renderAdminVideosTab() {
+      const dateInp = document.getElementById('admin-vid-date');
+      if (dateInp && !dateInp.value) dateInp.value = activeScheduleDate;
+
+      const q = (document.getElementById('admin-vid-search')?.value || '').trim().toLowerCase();
+      const filterDate = document.getElementById('admin-vid-filter-date')?.value || '';
+
+      const vids = [...appState.videos]
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .filter(v => {
+          const matchD = !filterDate || v.date === filterDate;
+          const matchQ = !q || (v.title && v.title.toLowerCase().includes(q)) || (v.subjectCode && v.subjectCode.toLowerCase().includes(q));
+          return matchD && matchQ;
+        });
+
+      const grid = document.getElementById('admin-videos-grid');
+      if (vids.length === 0) {
+        grid.innerHTML = `<div class="col-span-full p-10 text-center text-xs text-slate-400 border border-dashed border-slate-700 rounded-2xl">No videos matching filter.</div>`;
+        return;
+      }
+
+      grid.innerHTML = vids.map(vid => {
+        const cleanId = extractYouTubeId(vid.youtubeId || vid.url || vid.embedSrc) || vid.youtubeId;
+        const embedSrc = buildEngineEmbedUrl(cleanId, vid.preferredEngine || DEFAULT_PLAYER_ENGINE);
+        const blobUrl = localBlobMap[vid.id] || vid.localBlobUrl || '';
+
+        return `
+          <div class="bg-white/90 dark:bg-obsidian-900/90 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+            <div class="aspect-video w-full bg-black">
+              ${vid.isLocalFile
+                ? (blobUrl ? `<video class="w-full h-full" src="${escapeHtml(blobUrl)}" controls playsinline></video>` : `<div class="w-full h-full flex items-center justify-center text-xs text-slate-400">Local File: ${escapeHtml(vid.localFileName || vid.title)}</div>`)
+                : `<iframe class="w-full h-full" src="${escapeHtml(embedSrc)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+              }
+            </div>
+            <div class="p-3.5 flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-extrabold bg-indigo-500/15 text-indigo-400">${escapeHtml(vid.subjectCode || 'VIDEO')}</span>
+                  <span class="text-[11px] font-mono text-slate-400">${escapeHtml(vid.date)} • ${vid.durationMins || 0}m</span>
+                </div>
+                <h4 class="text-xs font-extrabold line-clamp-2">${escapeHtml(vid.title)}</h4>
+              </div>
+              <div class="flex items-center justify-end gap-1.5 mt-3 pt-2.5 border-t border-slate-200/70 dark:border-slate-800">
+                <button type="button" onclick="editAdminVideo('${vid.id}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25 text-[11px] font-bold">
+                  <i data-lucide="pencil" class="w-3 h-3"></i> Edit
+                </button>
+                <button type="button" onclick="deleteAdminVideo('${vid.id}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 text-[11px] font-bold">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function editAdminVideo(vidId) {
+      const vid = appState.videos.find(v => v.id === vidId);
+      if (!vid) return;
+      document.getElementById('admin-vid-edit-id').value = vid.id;
+      document.getElementById('admin-vid-url').value = vid.url || '';
+      document.getElementById('admin-vid-embed').value = '';
+      document.getElementById('admin-vid-subject').value = vid.subjectCode || 'VIDEO';
+      document.getElementById('admin-vid-date').value = vid.date;
+      document.getElementById('admin-vid-title').value = vid.title || '';
+      document.getElementById('admin-vid-mins').value = vid.durationMins || 0;
+      document.getElementById('admin-vid-form-title').textContent = 'Editing Video Entry';
+      document.getElementById('admin-vid-submit-btn').textContent = 'Save Video Changes';
+      document.getElementById('admin-vid-cancel-btn').classList.remove('hidden');
+      updateAdminVideoPreview();
+    }
+
+    function resetAdminVideoForm() {
+      document.getElementById('admin-vid-edit-id').value = '';
+      document.getElementById('admin-vid-url').value = '';
+      document.getElementById('admin-vid-embed').value = '';
+      document.getElementById('admin-vid-file').value = '';
+      document.getElementById('admin-vid-subject').value = 'INT108';
+      document.getElementById('admin-vid-date').value = activeScheduleDate;
+      document.getElementById('admin-vid-title').value = '';
+      document.getElementById('admin-vid-mins').value = '15';
+      document.getElementById('admin-vid-form-title').textContent = 'Add Video to Archive';
+      document.getElementById('admin-vid-submit-btn').textContent = '+ Save Video Entry';
+      document.getElementById('admin-vid-cancel-btn').classList.add('hidden');
+      updateAdminVideoPreview();
+    }
+
+    function deleteAdminVideo(vidId) {
+      confirmAction(
+        'Delete Video Entry?',
+        'This will permanently remove the video entry from your Video Creation archive.',
+        () => {
+          appState.videos = appState.videos.filter(v => v.id !== vidId);
+          saveAllSyncedKeys();
+          renderAll();
+          showToast('Video deleted from archive!');
+        }
+      );
+    }
+
+    // --- TAB 5: PROFIT & PNL CONTROL PANEL ---
+    function setAdminPnlMode(mode) {
+      adminPnlMode = mode;
+      const bPlay = document.getElementById('admin-pnl-mode-play');
+      const bDir = document.getElementById('admin-pnl-mode-dir');
+      const wPlay = document.getElementById('admin-pnl-playing-wrap');
+      const wDir = document.getElementById('admin-pnl-direct-wrap');
+      if (mode === 'playing') {
+        bPlay.className = 'py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm';
+        bDir.className = 'py-1.5 rounded-lg text-slate-500 dark:text-slate-400';
+        wPlay.classList.remove('hidden');
+        wDir.classList.add('hidden');
+      } else {
+        bDir.className = 'py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm';
+        bPlay.className = 'py-1.5 rounded-lg text-slate-500 dark:text-slate-400';
+        wDir.classList.remove('hidden');
+        wPlay.classList.add('hidden');
+      }
+    }
+
+    function updateAdminPnlPreview() {
+      const start = parseFloat(document.getElementById('admin-pnl-start-play')?.value) || 0;
+      const w = parseFloat(document.getElementById('admin-pnl-withdraw')?.value) || 0;
+      const d = parseFloat(document.getElementById('admin-pnl-deposit')?.value) || 0;
+      const exp = Number((start - w + d).toFixed(2));
+      const el = document.getElementById('admin-pnl-expected-preview');
+      if (el) el.textContent = exp.toLocaleString();
+    }
+
+    function getNextAdminProfitDate() {
+      const s = computeProfitSeries();
+      if (s.length === 0) return DEFAULT_TODAY;
+      const last = s[s.length - 1].date;
+      const d = new Date(last + 'T00:00:00');
+      d.setDate(d.getDate() + 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function advanceAdminPnlDate() {
+      const inp = document.getElementById('admin-pnl-date');
+      const base = inp.value || getNextAdminProfitDate();
+      const d = new Date(base + 'T00:00:00');
+      d.setDate(d.getDate() + 1);
+      inp.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function renderAdminProfitTab() {
+      const series = computeProfitSeries();
+      const latest = series.length > 0 ? series[series.length - 1] : null;
+      const editId = document.getElementById('admin-pnl-edit-id')?.value;
+
+      if (!editId) {
+        const startInp = document.getElementById('admin-pnl-start-play');
+        if (startInp && document.activeElement !== startInp) {
+          startInp.value = latest ? latest.closingPlayingAmt : 21275;
+        }
+        const dateInp = document.getElementById('admin-pnl-date');
+        if (dateInp && !dateInp.value) {
+          dateInp.value = getNextAdminProfitDate();
+        }
+      }
+      updateAdminPnlPreview();
+
+      const q = (document.getElementById('admin-pnl-search')?.value || '').trim().toLowerCase();
+      const rows = [...series].reverse().filter(r =>
+        !q || formatDDMMYYYY(r.date).toLowerCase().includes(q) || r.date.includes(q) || (r.note && r.note.toLowerCase().includes(q))
+      );
+
+      document.getElementById('admin-pnl-tbody').innerHTML = rows.map(row => {
+        const pnlCls = row.pnl > 0 ? 'text-emerald-500 font-extrabold' : row.pnl < 0 ? 'text-rose-500 font-extrabold' : 'text-slate-400';
+        const wdStr = [
+          row.withdrawal > 0 ? `−${row.withdrawal}W` : '',
+          row.deposit > 0 ? `+${row.deposit}D` : ''
+        ].filter(Boolean).join(' ') || '—';
+
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-obsidian-850/80">
+            <td class="px-2 py-2 text-center font-mono text-slate-400">${row.dayIndex}</td>
+            <td class="px-3 py-2 text-left font-mono whitespace-nowrap">
+              <span class="font-bold">${formatDDMMYYYY(row.date)}</span>
+              ${row.note ? `<div class="text-[10px] font-sans text-slate-400 truncate max-w-[140px]">${escapeHtml(row.note)}</div>` : ''}
+            </td>
+            <td class="px-2 py-2 font-mono text-[11px]">${wdStr}</td>
+            <td class="px-2 py-2 font-mono text-amber-500">${Math.round(row.expectedPlayingAmt).toLocaleString()}</td>
+            <td class="px-2 py-2 font-mono font-bold text-indigo-400">${Math.round(row.closingPlayingAmt).toLocaleString()}</td>
+            <td class="px-2 py-2 font-mono ${pnlCls}">${formatSigned(row.pnl)}</td>
+            <td class="px-2.5 py-2 font-mono font-black">${Math.round(row.accumulatedProfit).toLocaleString()}</td>
+            <td class="px-2.5 py-2 text-center whitespace-nowrap">
+              <button type="button" onclick="editAdminProfitRow('${row.id}')" title="Modify Row" class="p-1 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-slate-800">
+                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              </button>
+              <button type="button" onclick="deleteAdminProfitRow('${row.id}')" title="Delete Row" class="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-800">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      if (!document.getElementById('tab-profit').classList.contains('hidden')) {
+        renderAdminProfitCharts(series);
+      }
+    }
+
+    function renderAdminProfitCharts(series) {
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(148, 163, 184, 0.22)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+      const labels = series.map(r => r.dayIndex);
+
+      const c1 = document.getElementById('adminDailyPnlChart')?.getContext('2d');
+      if (c1) {
+        if (adminDailyChart) adminDailyChart.destroy();
+        adminDailyChart = new Chart(c1, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{ data: series.map(r => r.pnl), borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.15)', borderWidth: 2, pointRadius: 1.5, fill: true }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: textColor, maxTicksLimit: 15 }, grid: { display: false } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }
+        });
+      }
+
+      const c2 = document.getElementById('adminAccumProfitChart')?.getContext('2d');
+      if (c2) {
+        if (adminAccumChart) adminAccumChart.destroy();
+        adminAccumChart = new Chart(c2, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{ data: series.map(r => r.accumulatedProfit), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 2.5, pointRadius: 1.5, fill: true }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: textColor, maxTicksLimit: 15 }, grid: { display: false } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }
+        });
+      }
+    }
+
+    function editAdminProfitRow(rowId) {
+      const series = computeProfitSeries();
+      const row = series.find(r => r.id === rowId);
+      if (!row) return;
+      document.getElementById('admin-pnl-edit-id').value = row.id;
+      document.getElementById('admin-pnl-date').value = row.date;
+      document.getElementById('admin-pnl-start-play').value = row.startingPlayingAmt ?? 21275;
+      document.getElementById('admin-pnl-withdraw').value = row.withdrawal || 0;
+      document.getElementById('admin-pnl-deposit').value = row.deposit || 0;
+      document.getElementById('admin-pnl-close-play').value = row.closingPlayingAmt ?? 21275;
+      document.getElementById('admin-pnl-direct-val').value = row.pnl;
+      document.getElementById('admin-pnl-highlight').value = row.highlight || 'none';
+      document.getElementById('admin-pnl-note').value = row.note || '';
+      document.getElementById('admin-pnl-form-title').textContent = `Editing ${formatDDMMYYYY(row.date)}`;
+      document.getElementById('admin-pnl-submit-btn').textContent = 'Update Ledger Entry';
+      document.getElementById('admin-pnl-cancel-btn').classList.remove('hidden');
+      updateAdminPnlPreview();
+    }
+
+    function resetAdminPnlForm() {
+      const series = computeProfitSeries();
+      const latestPlay = series.length > 0 ? series[series.length - 1].closingPlayingAmt : 21275;
+      document.getElementById('admin-pnl-edit-id').value = '';
+      document.getElementById('admin-pnl-date').value = getNextAdminProfitDate();
+      document.getElementById('admin-pnl-start-play').value = latestPlay;
+      document.getElementById('admin-pnl-withdraw').value = '0';
+      document.getElementById('admin-pnl-deposit').value = '0';
+      document.getElementById('admin-pnl-close-play').value = '';
+      document.getElementById('admin-pnl-direct-val').value = '';
+      document.getElementById('admin-pnl-highlight').value = 'none';
+      document.getElementById('admin-pnl-note').value = '';
+      document.getElementById('admin-pnl-form-title').textContent = 'Add Session / Adjustment';
+      document.getElementById('admin-pnl-submit-btn').textContent = '+ Save Ledger Entry';
+      document.getElementById('admin-pnl-cancel-btn').classList.add('hidden');
+      updateAdminPnlPreview();
+    }
+
+    function deleteAdminProfitRow(rowId) {
+      confirmAction(
+        'Delete Profit Ledger Row?',
+        'All subsequent running balances and charts will recalculate automatically.',
+        () => {
+          appState.profitLedger = appState.profitLedger.filter(r => r.id !== rowId);
+          saveAllSyncedKeys();
+          resetAdminPnlForm();
+          renderAll();
+          showToast('Ledger row deleted & balances recalculated!');
+        }
+      );
+    }
+
+    /**
+     * =========================================================================
+     * EVENT LISTENERS & BOOTSTRAP
+     * =========================================================================
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tab Navigation
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.tab;
+          document.querySelectorAll('.nav-tab').forEach(b => {
+            b.classList.remove('active', 'border-amber-500', 'text-amber-600', 'dark:text-amber-400');
+            b.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+          });
+          btn.classList.add('active', 'border-amber-500', 'text-amber-600', 'dark:text-amber-400');
+          btn.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+          document.getElementById(`tab-${target}`).classList.remove('hidden');
+
+          if (target === 'profit') renderAdminProfitTab();
+          if (window.lucide) lucide.createIcons();
+        });
+      });
+
+      // Theme Toggle
+      document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        if (!document.getElementById('tab-profit').classList.contains('hidden')) renderAdminProfitTab();
+      });
+
+      // Confirm Modal OK Button
+      document.getElementById('confirm-modal-ok-btn').addEventListener('click', () => {
+        if (typeof pendingConfirmCallback === 'function') pendingConfirmCallback();
+        closeConfirmModal();
+      });
+
+      // JSON Import File Handler
+      document.getElementById('import-json-input').addEventListener('change', e => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            appState = normalizeStateSchema(JSON.parse(ev.target.result));
+            saveAllSyncedKeys();
+            resetAdminPnlForm();
+            renderAll();
+            showToast('Imported JSON state into Mirror Control Panel!');
+          } catch (err) {
+            showToast('Failed to parse JSON file!', 'error');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // Schedule & Study Overrides Events
+      document.getElementById('admin-date-picker').addEventListener('change', e => {
+        if (e.target.value) {
+          activeScheduleDate = e.target.value;
+          getOrCreateDay(activeScheduleDate);
+          saveAllSyncedKeys();
+          renderAll();
+        }
+      });
+      document.getElementById('admin-sleep-input').addEventListener('input', e => {
+        getOrCreateDay(activeScheduleDate).sleepHours = Math.min(24, Math.max(0, parseFloat(e.target.value) || 0));
+        saveAllSyncedKeys();
+        renderAll();
+      });
+      document.getElementById('admin-classes-input').addEventListener('input', e => {
+        getOrCreateDay(activeScheduleDate).classesCount = Math.min(24, Math.max(0, parseInt(e.target.value, 10) || 0));
+        saveAllSyncedKeys();
+        renderAll();
+      });
+
+      document.getElementById('admin-task-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const editId = document.getElementById('admin-task-edit-id').value;
+        const payload = {
+          name: document.getElementById('admin-task-name').value.trim(),
+          category: document.getElementById('admin-task-category').value,
+          startTime: document.getElementById('admin-task-start').value,
+          endTime: document.getElementById('admin-task-end').value,
+          icon: document.getElementById('admin-task-icon').value,
+          description: document.getElementById('admin-task-desc').value.trim(),
+          completionNote: document.getElementById('admin-task-note').value.trim(),
+          completed: document.getElementById('admin-task-completed').checked
+        };
+        const dayData = getOrCreateDay(activeScheduleDate);
+        if (editId) {
+          const existing = dayData.tasks.find(t => t.id === editId);
+          if (existing) Object.assign(existing, payload);
+          showToast('Timeline block updated!');
+        } else {
+          dayData.tasks.push({ id: 'task-' + Date.now(), ...payload });
+          showToast('Timeline block added!');
+        }
+        saveAllSyncedKeys();
+        resetAdminTaskForm();
+        renderAll();
+      });
+
+      // Subject & Ratio CRUD Events
+      document.getElementById('admin-subject-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const editId = document.getElementById('admin-sub-edit-id').value;
+        const code = document.getElementById('admin-sub-code').value.trim().toUpperCase();
+        const pct = Math.max(0, parseFloat(document.getElementById('admin-sub-pct').value) || 0);
+        const name = document.getElementById('admin-sub-name').value.trim();
+        const hasReward = document.getElementById('admin-sub-has-reward').checked;
+        const rewardCode = hasReward
+          ? (document.getElementById('admin-sub-reward-code').value.trim().toUpperCase() || `REWARD_${code}`)
+          : null;
+
+        if (editId) {
+          const existing = appState.config.subjects.find(s => s.id === editId);
+          if (existing) Object.assign(existing, { code, pct, name, hasReward, rewardCode });
+          showToast(`Updated subject ${code}!`);
+        } else {
+          appState.config.subjects.push({
+            id: code.replace(/\s+/g, '_') + '_' + Date.now().toString().slice(-3),
+            code,
+            name,
+            pct,
+            hasReward,
+            rewardCode,
+            color: 'indigo'
+          });
+          showToast(`Added subject ${code}!`);
+        }
+        saveAllSyncedKeys();
+        resetAdminSubjectForm();
+        renderAll();
+      });
+
+      // Video Creation Manager Events
+      document.getElementById('admin-vid-url').addEventListener('input', updateAdminVideoPreview);
+      document.getElementById('admin-vid-embed').addEventListener('input', updateAdminVideoPreview);
+      document.getElementById('admin-vid-file').addEventListener('change', updateAdminVideoPreview);
+      document.getElementById('admin-vid-search').addEventListener('input', () => { renderAdminVideosTab(); if (window.lucide) lucide.createIcons(); });
+      document.getElementById('admin-vid-filter-date').addEventListener('change', () => { renderAdminVideosTab(); if (window.lucide) lucide.createIcons(); });
+
+      document.getElementById('admin-video-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const editId = document.getElementById('admin-vid-edit-id').value;
+        const urlVal = document.getElementById('admin-vid-url').value;
+        const embedVal = document.getElementById('admin-vid-embed').value;
+        const fileInp = document.getElementById('admin-vid-file');
+        const localFile = fileInp && fileInp.files && fileInp.files[0];
+        const parsed = parseVideoInputs(urlVal, embedVal);
+
+        const subjectCode = document.getElementById('admin-vid-subject').value.trim().toUpperCase() || 'VIDEO';
+        const dateVal = document.getElementById('admin-vid-date').value || activeScheduleDate;
+        const titleVal = document.getElementById('admin-vid-title').value.trim() || 'Lecture Video';
+        const minsVal = Math.max(0, parseInt(document.getElementById('admin-vid-mins').value, 10) || 0);
+
+        if (editId) {
+          const existing = appState.videos.find(v => v.id === editId);
+          if (existing) {
+            existing.subjectCode = subjectCode;
+            existing.date = dateVal;
+            existing.title = titleVal;
+            existing.durationMins = minsVal;
+            if (localFile) {
+              const bUrl = URL.createObjectURL(localFile);
+              localBlobMap[existing.id] = bUrl;
+              existing.isLocalFile = true;
+              existing.localFileName = localFile.name;
+              existing.localBlobUrl = bUrl;
+            } else if (parsed) {
+              existing.isLocalFile = false;
+              existing.youtubeId = parsed.videoId;
+              existing.url = parsed.watchUrl;
+              existing.embedSrc = parsed.embedSrc;
+            }
+          }
+          showToast('Video entry updated!');
+        } else {
+          if (!parsed && !localFile) {
+            showToast('Provide a YouTube link, <iframe> embed code, or local video file!', 'error');
+            return;
+          }
+          const newId = 'vid-' + Date.now();
+          if (localFile) {
+            const bUrl = URL.createObjectURL(localFile);
+            localBlobMap[newId] = bUrl;
+            appState.videos.unshift({
+              id: newId,
+              date: dateVal,
+              isLocalFile: true,
+              localFileName: localFile.name,
+              localBlobUrl: bUrl,
+              title: titleVal,
+              subjectCode,
+              taskLabel: 'Mirror Control Panel Entry',
+              durationMins: minsVal
+            });
+          } else {
+            appState.videos.unshift({
+              id: newId,
+              date: dateVal,
+              youtubeId: parsed.videoId,
+              url: parsed.watchUrl,
+              embedSrc: parsed.embedSrc,
+              preferredEngine: DEFAULT_PLAYER_ENGINE,
+              title: titleVal,
+              subjectCode,
+              taskLabel: 'Mirror Control Panel Entry',
+              durationMins: minsVal
+            });
+          }
+          showToast('Video added to archive!');
+        }
+
+        saveAllSyncedKeys();
+        resetAdminVideoForm();
+        renderAll();
+      });
+
+      // Profit & PNL Control Panel Events
+      document.getElementById('admin-pnl-start-play').addEventListener('input', updateAdminPnlPreview);
+      document.getElementById('admin-pnl-withdraw').addEventListener('input', updateAdminPnlPreview);
+      document.getElementById('admin-pnl-deposit').addEventListener('input', updateAdminPnlPreview);
+      document.getElementById('admin-pnl-search').addEventListener('input', () => { renderAdminProfitTab(); if (window.lucide) lucide.createIcons(); });
+
+      document.getElementById('admin-pnl-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const editId = document.getElementById('admin-pnl-edit-id').value;
+        const dateVal = document.getElementById('admin-pnl-date').value;
+        if (!dateVal) return;
+
+        const startPlay = Math.max(0, parseFloat(document.getElementById('admin-pnl-start-play').value) || 21275);
+        const withdrawal = Math.max(0, parseFloat(document.getElementById('admin-pnl-withdraw').value) || 0);
+        const deposit = Math.max(0, parseFloat(document.getElementById('admin-pnl-deposit').value) || 0);
+        const expected = Number((startPlay - withdrawal + deposit).toFixed(2));
+        const highlight = document.getElementById('admin-pnl-highlight').value;
+        const note = document.getElementById('admin-pnl-note').value.trim();
+
+        let pnl = 0;
+        let closingPlayingAmt = expected;
+
+        if (adminPnlMode === 'playing') {
+          const closeRaw = document.getElementById('admin-pnl-close-play').value;
+          closingPlayingAmt = closeRaw !== '' ? parseFloat(closeRaw) : expected;
+          pnl = Number((closingPlayingAmt - expected).toFixed(2));
+        } else {
+          const dirRaw = document.getElementById('admin-pnl-direct-val').value;
+          pnl = dirRaw !== '' ? parseFloat(dirRaw) : 0;
+          closingPlayingAmt = Number((expected + pnl).toFixed(2));
+        }
+
+        if (editId) {
+          const existing = appState.profitLedger.find(r => r.id === editId);
+          if (existing) {
+            Object.assign(existing, {
+              date: dateVal,
+              pnl,
+              withdrawal,
+              deposit,
+              startingPlayingAmt: startPlay,
+              closingPlayingAmt,
+              highlight,
+              note
+            });
+          }
+          showToast(`Modified ${formatDDMMYYYY(dateVal)} (${formatSigned(pnl)} PNL)!`);
+        } else {
+          appState.profitLedger.push({
+            id: 'pnl-' + Date.now(),
+            date: dateVal,
+            pnl,
+            capAdj: 0,
+            withdrawal,
+            deposit,
+            startingPlayingAmt: startPlay,
+            closingPlayingAmt,
+            highlight,
+            note
+          });
+          showToast(`Added ${formatDDMMYYYY(dateVal)} (${formatSigned(pnl)} PNL)!`);
+        }
+
+        saveAllSyncedKeys();
+        renderAll();
+        resetAdminPnlForm();
+      });
+
+      renderAll();
+      resetAdminPnlForm();
+    });
+  </script>
+</body>
+</html>
