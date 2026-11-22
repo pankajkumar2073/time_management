@@ -170,12 +170,10 @@
   </div>
 
   <script>
-    const ALLOWED_MOBILE = '7889952893';
-    const ALLOWED_PASSWORD = 'Pankaj#19@80&';
-    const SESSION_KEY = 'timeflow_admin_unlocked_v1';
+    const GOOGLE_DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbzUXVHBrVax7J-ZIjqvSY59anZvBK1AVrKH2SXWQbI7CmenR4z72I_enYqx6GKk-x2b/exec';
+    const TOKEN_KEY = 'timeflow_admin_token_v1';
 
-    // If already unlocked in this tab session, go straight to item2.html
-    if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+    if (sessionStorage.getItem(TOKEN_KEY)) {
       window.location.replace('item2.html');
     }
 
@@ -187,20 +185,43 @@
       toggleBtn.textContent = isHidden ? 'Hide' : 'Show';
     });
 
-    document.getElementById('login-form').addEventListener('submit', function (e) {
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
       e.preventDefault();
       const enteredMobile = document.getElementById('mobile').value.trim();
       const enteredPassword = document.getElementById('password').value;
       const errorBox = document.getElementById('error-msg');
+      const submitBtn = this.querySelector('button[type="submit"]');
 
-      if (enteredMobile === ALLOWED_MOBILE && enteredPassword === ALLOWED_PASSWORD) {
-        errorBox.style.display = 'none';
-        sessionStorage.setItem(SESSION_KEY, 'true');
-        window.location.href = 'item2.html';
-      } else {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Verifying...';
+      errorBox.style.display = 'none';
+
+      try {
+        const res = await fetch(GOOGLE_DRIVE_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'adminLogin',
+            mobile: enteredMobile,
+            password: enteredPassword
+          })
+        });
+        const result = await res.json();
+
+        if (result.status === 'ok' && result.token) {
+          sessionStorage.setItem(TOKEN_KEY, result.token);
+          window.location.href = 'item2.html';
+        } else {
+          errorBox.style.display = 'block';
+          passwordInput.value = '';
+          passwordInput.focus();
+        }
+      } catch (err) {
+        errorBox.textContent = 'Network error verifying credentials.';
         errorBox.style.display = 'block';
-        passwordInput.value = '';
-        passwordInput.focus();
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login to Control Panel';
       }
     });
   </script>
