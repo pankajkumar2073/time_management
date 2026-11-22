@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>TimeFlow Command Center — 24H Study, Video Vault & Profit Matrix</title>
+  <link rel="icon" type="image/png" href="https://www.shutterstock.com/image-vector/vector-illustration-work-time-management-600nw-1650125056.jpg" />
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter & JetBrains Mono -->
@@ -1228,7 +1229,13 @@
      */
 
     const STORAGE_KEY = 'timeflow_command_center_v12';
-    const DEFAULT_TODAY = '2026-11-21';
+    function getRealTodayDateStr() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
     const IS_FILE_PROTOCOL = window.location.protocol === 'file:';
 
     const DEFAULT_SUBJECT_CONFIG = {
@@ -1462,7 +1469,7 @@
     }
 
     let appState = loadAppState();
-    let currentDate = DEFAULT_TODAY;
+    let currentDate = getRealTodayDateStr();
     let selectedSubjectId = 'INT108';
     let currentTaskFilter = 'all';
     let videoFilterDate = '';
@@ -1508,11 +1515,40 @@
       return seeded;
     }
 
-    function saveAppState(stateObj = appState) {
+    const GOOGLE_DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbzUXVHBrVax7J-ZIjqvSY59anZvBK1AVrKH2SXWQbI7CmenR4z72I_enYqx6GKk-x2b/exec';
+
+    async function syncFromGoogleDrive() {
+      try {
+        const res = await fetch(GOOGLE_DRIVE_API_URL);
+        const cloudData = await res.json();
+
+        if (cloudData && cloudData.days && cloudData.config) {
+          appState = cloudData;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+          renderAll();
+          showToast('Synced latest shared data from Google Drive!');
+        }
+      } catch (err) {
+        console.warn('Offline or Drive fetch failed, using local cache:', err);
+      }
+    }
+
+    async function saveAppState(stateObj = appState) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(stateObj));
       } catch (e) {
-        console.error('Failed to save to localStorage:', e);
+        console.error('Local save failed:', e);
+      }
+
+      try {
+        await fetch(GOOGLE_DRIVE_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(stateObj)
+        });
+      } catch (err) {
+        console.error('Google Drive sync failed:', err);
+        showToast('Saved locally (Drive sync failed)', 'error');
       }
     }
 
@@ -4051,7 +4087,7 @@
       document.getElementById('date-picker').addEventListener('change', e => switchDate(e.target.value));
       document.getElementById('prev-day-btn').addEventListener('click', () => shiftDateByDays(-1));
       document.getElementById('next-day-btn').addEventListener('click', () => shiftDateByDays(1));
-      document.getElementById('today-btn').addEventListener('click', () => switchDate(DEFAULT_TODAY));
+      document.getElementById('today-btn').addEventListener('click', () => switchDate(getRealTodayDateStr()));
 
       document.getElementById('sleep-hours-input').addEventListener('input', e => {
         const val = Math.min(24, Math.max(0, parseFloat(e.target.value) || 0));
@@ -4450,6 +4486,7 @@
       }
 
       renderAll();
+      syncFromGoogleDrive();
       resetProfitForm();
       updateTimerUI();
     });

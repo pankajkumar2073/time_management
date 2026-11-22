@@ -891,13 +891,44 @@
       return seeded;
     }
 
-    function saveAllSyncedKeys(stateObj = appState) {
+    const GOOGLE_DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbzUXVHBrVax7J-ZIjqvSY59anZvBK1AVrKH2SXWQbI7CmenR4z72I_enYqx6GKk-x2b/exec';
+
+    async function syncFromDriveToMirror() {
+      try {
+        const res = await fetch(GOOGLE_DRIVE_API_URL);
+        const cloudData = await res.json();
+        if (cloudData && (cloudData.days || cloudData.config || cloudData.data)) {
+          appState = normalizeStateSchema(cloudData);
+          const serialized = JSON.stringify(appState);
+          localStorage.setItem(PRIMARY_STORAGE_KEY, serialized);
+          localStorage.setItem(LEGACY_STORAGE_KEY, serialized);
+          resetAdminPnlForm();
+          renderAll();
+          showToast('Synced latest state from Google Drive!');
+        }
+      } catch (err) {
+        console.warn('Drive fetch skipped/failed, using local state:', err);
+      }
+    }
+
+    async function saveAllSyncedKeys(stateObj = appState) {
       try {
         const serialized = JSON.stringify(stateObj);
         localStorage.setItem(PRIMARY_STORAGE_KEY, serialized);
         localStorage.setItem(LEGACY_STORAGE_KEY, serialized);
       } catch (e) {
         console.error('Storage save error:', e);
+      }
+
+      try {
+        await fetch(GOOGLE_DRIVE_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(stateObj)
+        });
+      } catch (err) {
+        console.error('Google Drive POST failed:', err);
+        showToast('Saved locally (Drive sync failed)', 'error');
       }
     }
 
@@ -2123,6 +2154,7 @@
       });
 
       renderAll();
+      syncFromDriveToMirror();
       resetAdminPnlForm();
     });
   </script>
