@@ -76,6 +76,41 @@
     .timer-running-glow {
       animation: pulseGlow 2.4s infinite ease-in-out;
     }
+  
+    /* Responsive & Touch Ergonomics Enhancements Across All Viewports */
+    html, body {
+      max-width: 100vw;
+      overflow-x: clip;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button, [role="button"], select, input[type="date"], input[type="time"] {
+      touch-action: manipulation;
+    }
+    @media (max-width: 640px) {
+      #admin-panel-modal > div {
+        max-height: 96vh;
+        border-radius: 1rem;
+      }
+      #admin-panel-modal table th,
+      #admin-panel-modal table td,
+      #pnl-ledger-tbody th,
+      #pnl-ledger-tbody td {
+        padding-left: 0.45rem !important;
+        padding-right: 0.45rem !important;
+        font-size: 11px !important;
+      }
+      .nav-tab {
+        padding-left: 0.65rem !important;
+        padding-right: 0.65rem !important;
+        font-size: 0.75rem !important;
+      }
+    }
+    @media (max-width: 380px) {
+      #date-picker {
+        width: 96px !important;
+        font-size: 0.7rem !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-obsidian-950 dark:text-slate-100 ambient-bg min-h-screen flex flex-col overflow-x-hidden transition-colors duration-300 selection:bg-indigo-500 selection:text-white">
@@ -142,6 +177,10 @@
 
         <!-- Global Controls -->
         <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <span id="cloud-sync-pill" title="Live Google Drive Cloud Sync Status" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-300 text-[11px] font-mono font-bold">
+            <span id="cloud-sync-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="cloud-sync-label">Cloud Ready</span>
+          </span>
           <button id="header-timer-pill" type="button" onclick="switchToTab('calculator')" class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-mono font-bold hover:bg-emerald-500/25 transition">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
             <span id="header-timer-text">19:00</span>
@@ -399,6 +438,7 @@
             <button data-task-filter="all" type="button" class="task-filter-btn px-3 py-1.5 rounded-xl font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20">All Blocks</button>
             <button data-task-filter="fixed" type="button" class="task-filter-btn px-3 py-1.5 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Fixed</button>
             <button data-task-filter="unexpected" type="button" class="task-filter-btn px-3 py-1.5 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Unexpected</button>
+            <button data-task-filter="sleep" type="button" class="task-filter-btn px-3 py-1.5 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Sleep Log</button>
           </div>
 
           <div id="daily-tasks-list" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
@@ -631,7 +671,7 @@
               </button>
             </div>
           </div>
-          <div class="h-72 w-full">
+          <div class="h-56 sm:h-64 lg:h-72 w-full">
             <canvas id="weeklyPerformanceChart"></canvas>
           </div>
         </div>
@@ -641,7 +681,7 @@
             <h3 class="text-base font-extrabold text-slate-900 dark:text-white">24H TIME DISTRIBUTION (WEEK)</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400">Sleep vs. Classes vs. Routines/Unexpected vs. Study</p>
           </div>
-          <div class="h-72 w-full">
+          <div class="h-56 sm:h-64 lg:h-72 w-full">
             <canvas id="weeklyTimeBreakdownChart"></canvas>
           </div>
         </div>
@@ -771,7 +811,7 @@
             </div>
             <span class="px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">PNL SERIES</span>
           </div>
-          <div class="h-72 w-full">
+          <div class="h-56 sm:h-64 lg:h-72 w-full">
             <canvas id="dailyPnlChart"></canvas>
           </div>
         </div>
@@ -784,7 +824,7 @@
             </div>
             <span class="px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">CUMULATIVE</span>
           </div>
-          <div class="h-72 w-full">
+          <div class="h-56 sm:h-64 lg:h-72 w-full">
             <canvas id="accumulatedProfitChart"></canvas>
           </div>
         </div>
@@ -922,7 +962,7 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto overflow-y-auto max-h-[540px] rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="overflow-x-auto overflow-y-auto max-h-[420px] sm:max-h-[540px] rounded-xl border border-slate-200 dark:border-slate-800">
             <table class="w-full text-xs text-right border-collapse tabular-nums">
               <thead class="sticky top-0 z-10 bg-slate-100 dark:bg-obsidian-850 text-slate-700 dark:text-slate-200 font-extrabold border-b border-slate-200 dark:border-slate-700">
                 <tr>
@@ -971,6 +1011,7 @@
             <select id="task-category-input" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
               <option value="unexpected">Unexpected / Unallocated</option>
               <option value="fixed">Fixed Daily Routine</option>
+              <option value="sleep">Sleep Log (Log Only — No 24H Deduction)</option>
             </select>
           </div>
           <div>
@@ -1219,27 +1260,7 @@
       </div>
     </div>
   </div>
-  <h6 style="margin: 24px auto; text-align: center; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
-  <a href="item1.html" style="
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 11px 22px;
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #e11d48 100%);
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-decoration: none;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.45);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 28px -4px rgba(225, 29, 72, 0.55)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px -4px rgba(99, 102, 241, 0.45)';">
-    &#128274; Click here to get Admin Control Panel
-  </a>
-</h6>
+  
   <script>
     /**
      * =========================================================================
@@ -1249,12 +1270,12 @@
 
     const STORAGE_KEY = 'timeflow_command_center_v12';
     function getRealTodayDateStr() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
     const IS_FILE_PROTOCOL = window.location.protocol === 'file:';
 
     const DEFAULT_SUBJECT_CONFIG = {
@@ -1530,45 +1551,378 @@
         console.error('Failed to read localStorage:', e);
       }
       const seeded = createInitialSeedData();
-      saveAppState(seeded);
+      seeded.lastUpdated = 0;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded)); } catch (e) {}
       return seeded;
     }
 
     const GOOGLE_DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbzUXVHBrVax7J-ZIjqvSY59anZvBK1AVrKH2SXWQbI7CmenR4z72I_enYqx6GKk-x2b/exec';
+    const ADMIN_TOKEN_KEY = 'timeflow_admin_token_v1';
+    let isCloudSaving = false;
+    let queuedSaveState = null;
 
-    async function syncFromGoogleDrive() {
-      try {
-        const res = await fetch(GOOGLE_DRIVE_API_URL);
-        const cloudData = await res.json();
-
-        if (cloudData && cloudData.days && cloudData.config) {
-          appState = cloudData;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-          renderAll();
-          showToast('Synced latest shared data from Google Drive!');
-        }
-      } catch (err) {
-        console.warn('Offline or Drive fetch failed, using local cache:', err);
+    function setCloudSyncStatus(state, text) {
+      const dot = document.getElementById('cloud-sync-dot');
+      const lbl = document.getElementById('cloud-sync-label');
+      if (!dot || !lbl) return;
+      lbl.textContent = text;
+      if (state === 'syncing') {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+      } else if (state === 'error') {
+        dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
       }
     }
 
-    async function saveAppState(stateObj = appState) {
+    async function syncFromGoogleDrive(silent = false) {
+      if (isCloudSaving) return;
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(stateObj));
-      } catch (e) {
-        console.error('Local save failed:', e);
+        if (!silent) setCloudSyncStatus('syncing', 'Syncing...');
+        const res = await fetch(`${GOOGLE_DRIVE_API_URL}?t=${Date.now()}`, {
+          method: 'GET',
+          cache: 'no-store'
+        });
+        const rawCloud = await res.json();
+        const cloudData = rawCloud && rawCloud.data ? rawCloud.data : rawCloud;
+
+        const hasValidCloudState =
+          cloudData &&
+          typeof cloudData === 'object' &&
+          (cloudData.days || cloudData.config || cloudData.profitLedger || cloudData.videos);
+
+        if (!hasValidCloudState) {
+          // Cloud is empty: if local has user edits, push them up; otherwise keep seed without overwriting
+          if (appState && Number(appState.lastUpdated || 0) > 0) {
+            await saveAppState(appState, true);
+          }
+          setCloudSyncStatus('ok', 'Cloud Synced');
+          return;
+        }
+
+        const localTs = Number(appState.lastUpdated || 0);
+        const cloudTs = Number(cloudData.lastUpdated || 0);
+
+        if (localTs === 0 || cloudTs > localTs || (!cloudTs && localTs === 0)) {
+          if (!Array.isArray(cloudData.videos)) cloudData.videos = [];
+          if (!Array.isArray(cloudData.profitLedger) || cloudData.profitLedger.length === 0) {
+            cloudData.profitLedger = createInitialProfitEntries();
+          }
+          if (!cloudData.config || !Array.isArray(cloudData.config.subjects)) {
+            cloudData.config = JSON.parse(JSON.stringify(DEFAULT_SUBJECT_CONFIG));
+          }
+          if (!cloudData.days || typeof cloudData.days !== 'object') {
+            cloudData.days = {};
+          }
+          appState = cloudData;
+          if (!appState.lastUpdated) appState.lastUpdated = Date.now();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+          renderAll();
+          if (!document.getElementById('admin-panel-modal').classList.contains('hidden')) {
+            renderAdminPanelModal();
+          }
+        }
+        setCloudSyncStatus('ok', 'Cloud Synced');
+      } catch (err) {
+        console.warn('Drive sync skipped/failed, keeping local state:', err);
+        setCloudSyncStatus('error', 'Offline / Local');
       }
+    }
+
+    async function saveAppState(stateObj = appState, skipStamp = false) {
+      const stampedState = skipStamp
+        ? stateObj
+        : { ...stateObj, lastUpdated: Date.now() };
+      appState = stampedState;
 
       try {
-        await fetch(GOOGLE_DRIVE_API_URL, {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stampedState));
+      } catch (e) {
+        console.error('Failed to save to localStorage:', e);
+      }
+
+      if (isCloudSaving) {
+        queuedSaveState = stampedState;
+        return;
+      }
+
+      isCloudSaving = true;
+      setCloudSyncStatus('syncing', 'Saving...');
+      try {
+        const res = await fetch(GOOGLE_DRIVE_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(stateObj)
+          body: JSON.stringify(stampedState)
         });
+        const result = await res.json();
+        if (result && (result.status === 'success' || result.status === 'ignored_stale')) {
+          setCloudSyncStatus('ok', 'Saved to Cloud');
+        } else {
+          setCloudSyncStatus('error', 'Save Warning');
+          console.warn('Apps Script POST response:', result);
+        }
       } catch (err) {
         console.error('Google Drive sync failed:', err);
-        showToast('Saved locally (Drive sync failed)', 'error');
+        setCloudSyncStatus('error', 'Local Only');
+      } finally {
+        isCloudSaving = false;
+        if (queuedSaveState) {
+          const nextState = queuedSaveState;
+          queuedSaveState = null;
+          saveAppState(nextState, true);
+        }
       }
+    }
+
+    async function forcePushCurrentStateToCloud() {
+      await saveAppState(appState, false);
+      showToast('All current data force-saved to Google Drive!');
+    }
+
+    /**
+     * =========================================================================
+     * UNIFIED IN-PAGE ADMIN LOGIN & CONTROL PANEL LOGIC
+     * =========================================================================
+     */
+    function openUnifiedAdminGate() {
+      if (sessionStorage.getItem(ADMIN_TOKEN_KEY)) {
+        openAdminPanelModal();
+        return;
+      }
+      document.getElementById('unified-admin-mobile').value = '';
+      document.getElementById('unified-admin-pass').value = '';
+      document.getElementById('admin-login-error').classList.add('hidden');
+      const modal = document.getElementById('admin-login-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeAdminLoginModal() {
+      const modal = document.getElementById('admin-login-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openAdminPanelModal() {
+      const modal = document.getElementById('admin-panel-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      renderAdminPanelModal();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeAdminPanelModal() {
+      const modal = document.getElementById('admin-panel-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function logoutAdminSession() {
+      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+      closeAdminPanelModal();
+      showToast('Admin Control Panel locked.');
+    }
+
+    function switchAdminSubTab(tabName) {
+      document.querySelectorAll('.adm-sub-tab').forEach(b => {
+        const active = b.dataset.admTab === tabName;
+        b.className = active
+          ? 'adm-sub-tab active px-3.5 py-2.5 text-xs font-extrabold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap'
+          : 'adm-sub-tab px-3.5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-200 whitespace-nowrap';
+      });
+      document.querySelectorAll('.adm-panel').forEach(p => p.classList.add('hidden'));
+      const target = document.getElementById(`adm-panel-${tabName}`);
+      if (target) target.classList.remove('hidden');
+      renderAdminPanelModal();
+    }
+
+    function renderAdminPanelModal() {
+      const dayData = getDayData(currentDate);
+      const metrics = calculateDayMetrics(dayData);
+      document.getElementById('adm-active-date-label').textContent = currentDate;
+
+      // 1. Timeline Tasks
+      const sortedTasks = [...dayData.tasks].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+      document.getElementById('adm-tasks-container').innerHTML = sortedTasks.length === 0
+        ? '<div class="text-xs text-slate-400">No tasks on this date.</div>'
+        : sortedTasks.map(t => `
+          <div class="p-2.5 rounded-lg bg-white dark:bg-obsidian-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-xs font-bold truncate ${t.completed ? 'line-through text-emerald-400' : ''}">${t.category === 'sleep' ? '🛌' : (t.icon || '⏱️')} ${escapeHtml(t.name)} ${t.category === 'sleep' ? '<span class="text-[10px] text-violet-400 font-mono">[Sleep Log]</span>' : ''}</div>
+              <div class="text-[10px] font-mono text-slate-400">${t.startTime} – ${t.endTime}</div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button type="button" onclick="adminToggleTask('${t.id}')" class="px-2 py-1 rounded bg-emerald-500/15 text-emerald-400 text-[10px] font-bold">${t.completed ? 'Undo' : 'Done'}</button>
+              <button type="button" onclick="adminDeleteTask('${t.id}')" class="px-2 py-1 rounded bg-rose-500/15 text-rose-400 text-[10px] font-bold">Delete</button>
+            </div>
+          </div>
+        `).join('');
+
+      // 2. Subject & Reward Overrides
+      document.getElementById('adm-subjects-container').innerHTML = metrics.allocations.map(sub => {
+        const isMainDone = dayData.completedSubjects.includes(sub.id);
+        const isRewDone = sub.hasReward && dayData.completedSubjects.includes(sub.rewardCode);
+        return `
+          <div class="p-2.5 rounded-lg bg-white dark:bg-obsidian-950 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+            <div class="text-xs font-bold">
+              <span class="font-mono text-indigo-400">${escapeHtml(sub.code)}</span> (${sub.mainMins}m)
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="adminToggleSubjectOverride('${sub.id}', ${sub.mainMins})" class="px-2 py-1 rounded text-[10px] font-extrabold ${isMainDone ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300'}">
+                ${isMainDone ? '✓ Approved' : 'Approve'}
+              </button>
+              ${sub.hasReward ? `
+                <button type="button" onclick="adminToggleRewardOverride('${sub.rewardCode}')" class="px-2 py-1 rounded text-[10px] font-extrabold ${isRewDone ? 'bg-amber-500 text-white' : 'bg-slate-800 text-amber-400'}">
+                  ${isRewDone ? '✓ ' + sub.rewardCode : sub.rewardCode}
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 3. PNL Rows
+      const series = [...computeProfitAndPlayingSeries()].reverse();
+      document.getElementById('adm-pnl-tbody').innerHTML = series.map(r => `
+        <tr>
+          <td class="px-3 py-1.5 text-left font-mono">${formatDDMMYYYY(r.date)}</td>
+          <td class="px-2.5 py-1.5 font-mono">${Math.round(r.expectedPlayingAmt).toLocaleString()}</td>
+          <td class="px-2.5 py-1.5 font-mono text-indigo-400">${Math.round(r.closingPlayingAmt).toLocaleString()}</td>
+          <td class="px-2.5 py-1.5 font-mono ${r.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatSignedNumber(r.pnl)}</td>
+          <td class="px-2.5 py-1.5 font-mono font-bold">${Math.round(r.accumulatedProfit).toLocaleString()}</td>
+          <td class="px-3 py-1.5 text-center">
+            <button type="button" onclick="adminDeletePnlRow('${r.id}')" class="px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 text-[10px] font-bold">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+
+      // 4. Videos
+      document.getElementById('adm-videos-list').innerHTML = appState.videos.map(v => `
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <div class="text-xs font-extrabold truncate">${escapeHtml(v.title)}</div>
+            <div class="text-[10px] font-mono text-slate-400">${escapeHtml(v.subjectCode)} • ${escapeHtml(v.date)}</div>
+          </div>
+          <button type="button" onclick="adminDeleteVideo('${v.id}')" class="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 text-[11px] font-bold shrink-0">Delete</button>
+        </div>
+      `).join('');
+
+      // 5. Raw JSON
+      const rawBox = document.getElementById('adm-raw-json');
+      if (rawBox && document.activeElement !== rawBox) {
+        rawBox.value = JSON.stringify(appState, null, 2);
+      }
+    }
+
+    function adminToggleTask(taskId) {
+      const dayData = getDayData(currentDate);
+      const t = dayData.tasks.find(x => x.id === taskId);
+      if (t) t.completed = !t.completed;
+      saveAppState();
+      renderAll();
+      renderAdminPanelModal();
+    }
+
+    function adminDeleteTask(taskId) {
+      const dayData = getDayData(currentDate);
+      dayData.tasks = dayData.tasks.filter(x => x.id !== taskId);
+      saveAppState();
+      renderAll();
+      renderAdminPanelModal();
+      showToast('Task deleted & synced to Google Drive!');
+    }
+
+    function adminToggleSubjectOverride(subId, mainMins) {
+      const dayData = getDayData(currentDate);
+      const idx = dayData.completedSubjects.indexOf(subId);
+      if (idx >= 0) {
+        dayData.completedSubjects.splice(idx, 1);
+        dayData.studyProgress[subId] = { completedSteps: [], spentMins: 0 };
+      } else {
+        dayData.completedSubjects.push(subId);
+        dayData.studyProgress[subId] = {
+          completedSteps: ['newConcept', 'todayProb', 'pDayProb', 'pWeekProb', 'video'],
+          spentMins: mainMins
+        };
+      }
+      saveAppState();
+      renderAll();
+      renderAdminPanelModal();
+    }
+
+    function adminToggleRewardOverride(rewardCode) {
+      const dayData = getDayData(currentDate);
+      const idx = dayData.completedSubjects.indexOf(rewardCode);
+      if (idx >= 0) dayData.completedSubjects.splice(idx, 1);
+      else dayData.completedSubjects.push(rewardCode);
+      saveAppState();
+      renderAll();
+      renderAdminPanelModal();
+    }
+
+    function adminApproveAllForDate() {
+      const dayData = getDayData(currentDate);
+      const metrics = calculateDayMetrics(dayData);
+      metrics.allocations.forEach(sub => {
+        if (!dayData.completedSubjects.includes(sub.id)) dayData.completedSubjects.push(sub.id);
+        dayData.studyProgress[sub.id] = {
+          completedSteps: ['newConcept', 'todayProb', 'pDayProb', 'pWeekProb', 'video'],
+          spentMins: sub.mainMins
+        };
+        if (sub.hasReward && sub.rewardCode && !dayData.completedSubjects.includes(sub.rewardCode)) {
+          dayData.completedSubjects.push(sub.rewardCode);
+        }
+      });
+      saveAppState();
+      renderAll();
+      renderAdminPanelModal();
+      showToast(`All subjects & rewards approved for ${currentDate}!`);
+    }
+
+    function adminDeleteDayRecord() {
+      delete appState.days[currentDate];
+      saveAppState();
+      renderAll();
+      renderAdminPanelModal();
+      showToast(`Cleared record for ${currentDate}`);
+    }
+
+    function adminDeletePnlRow(rowId) {
+      appState.profitLedger = appState.profitLedger.filter(r => r.id !== rowId);
+      saveAppState();
+      renderAll();
+      renderAdminPanelModal();
+      showToast('Ledger entry deleted & synced!');
+    }
+
+    function adminDeleteVideo(vidId) {
+      appState.videos = appState.videos.filter(v => v.id !== vidId);
+      saveAppState();
+      renderAll();
+      renderAdminPanelModal();
+      showToast('Video deleted & synced!');
+    }
+
+    function adminApplyRawJson() {
+      try {
+        const parsed = JSON.parse(document.getElementById('adm-raw-json').value);
+        appState = parsed.data ? parsed.data : parsed;
+        saveAppState();
+        renderAll();
+        renderAdminPanelModal();
+        showToast('Raw JSON saved & synced to Google Drive!');
+      } catch (e) {
+        showToast('Invalid JSON: ' + e.message, 'error');
+      }
+    }
+
+    function adminResetToBaseline() {
+      appState = createInitialSeedData();
+      saveAppState();
+      renderAll();
+      renderAdminPanelModal();
+      showToast('Reset to baseline & synced to Google Drive!');
     }
 
     /**
@@ -1649,7 +2003,7 @@
           completedSubjects: [],
           studyProgress: {}
         };
-        saveAppState();
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch (e) {}
       }
       if (!appState.days[dateStr].studyProgress) {
         appState.days[dateStr].studyProgress = {};
@@ -2094,6 +2448,7 @@
       let unexpectedMins = 0;
 
       dayData.tasks.forEach(task => {
+        if (task.category === 'sleep') return; // Sleep tasks are for log only; Sleep hrs input handles 24h deduction
         const dur = getTaskDurationMinutes(task);
         if (task.category === 'fixed') fixedMins += dur;
         else unexpectedMins += dur;
@@ -2370,10 +2725,14 @@
         const durMins = getTaskDurationMinutes(task);
         const durHrs = (durMins / 60).toFixed(2);
         const isFixed = task.category === 'fixed';
+        const isSleep = task.category === 'sleep';
         const isVideo = isVideoRelatedTaskName(task.name);
-        const badgeClass = isFixed
-          ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20'
-          : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/20';
+        const badgeClass = isSleep
+          ? 'bg-violet-500/15 text-violet-700 dark:text-violet-300 border border-violet-500/25'
+          : isFixed
+            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20'
+            : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/20';
+        const badgeText = isSleep ? 'Sleep Log (No 24H Deduct)' : (isFixed ? 'Fixed' : 'Unexpected');
 
         return `
           <div class="group rounded-xl p-3.5 border transition-all ${
@@ -2393,7 +2752,7 @@
                       ${escapeHtml(task.name)}
                     </h4>
                     <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${badgeClass}">
-                      ${isFixed ? 'Fixed' : 'Unexpected'}
+                      ${badgeText}
                     </span>
                     ${isVideo ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-rose-500/15 text-rose-500 border border-rose-500/25">Video Proof Req</span>` : ''}
                   </div>
@@ -3458,10 +3817,17 @@
         studySeries.push(m.availableHrs);
 
         dData.tasks.forEach(t => {
-          if (t.completed || t.completionNote) {
+          if (t.completed || t.completionNote || t.category === 'sleep') {
             allNotesLogs.push({ date: dStr, dayNum: idx + 1, task: t });
           }
         });
+      });
+
+      // Latest dates shown at the very top
+      allNotesLogs.sort((a, b) => {
+        const cmp = b.date.localeCompare(a.date);
+        if (cmp !== 0) return cmp;
+        return timeToMinutes(b.task.startTime) - timeToMinutes(a.task.startTime);
       });
 
       document.getElementById('wk-kpi-completed').textContent = totalCompleted;
@@ -4023,10 +4389,12 @@
     function updateTaskDurationPreview() {
       const start = document.getElementById('task-start-input').value;
       const end = document.getElementById('task-end-input').value;
+      const cat = document.getElementById('task-category-input').value;
       const mins = getTaskDurationMinutes({ startTime: start, endTime: end });
       const hrs = (mins / 60).toFixed(2);
+      const suffix = cat === 'sleep' ? ' • Log Only (0h 24H deduction)' : '';
       document.getElementById('task-duration-preview').innerHTML = `
-        <span>Duration (${format12Hour(start)} – ${format12Hour(end)}):</span>
+        <span>Duration (${format12Hour(start)} – ${format12Hour(end)})${suffix}:</span>
         <span class="font-mono">${mins} mins (${hrs} hrs)</span>
       `;
     }
@@ -4153,6 +4521,7 @@
       document.getElementById('cancel-task-modal-btn').addEventListener('click', closeTaskModal);
       document.getElementById('task-start-input').addEventListener('change', updateTaskDurationPreview);
       document.getElementById('task-end-input').addEventListener('change', updateTaskDurationPreview);
+      document.getElementById('task-category-input').addEventListener('change', updateTaskDurationPreview);
 
       document.getElementById('task-form').addEventListener('submit', e => {
         e.preventDefault();
@@ -4189,7 +4558,11 @@
             completed: false,
             completionNote: ''
           });
-          showToast(`Added "${name}" (−${(durMins / 60).toFixed(2)}h from 24h)`);
+          if (category === 'sleep') {
+            showToast(`Logged Sleep "${name}" (${(durMins / 60).toFixed(2)}h) — log only, no 24h deduction`);
+          } else {
+            showToast(`Added "${name}" (−${(durMins / 60).toFixed(2)}h from 24h)`);
+          }
         }
 
         saveAppState();
@@ -4504,11 +4877,250 @@
         timerState.blockMins = initDiv.newConcept;
       }
 
+      const adminLoginForm = document.getElementById('unified-admin-login-form');
+      if (adminLoginForm) {
+        adminLoginForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          const mob = document.getElementById('unified-admin-mobile').value.trim();
+          const pass = document.getElementById('unified-admin-pass').value;
+          const errEl = document.getElementById('admin-login-error');
+          const btn = document.getElementById('unified-admin-submit');
+
+          btn.disabled = true;
+          btn.textContent = 'Verifying...';
+          errEl.classList.add('hidden');
+
+          try {
+            const res = await fetch(GOOGLE_DRIVE_API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                action: 'adminLogin',
+                mobile: mob,
+                password: pass
+              })
+            });
+            const result = await res.json();
+            if (result.status === 'ok' && result.token) {
+              sessionStorage.setItem(ADMIN_TOKEN_KEY, result.token);
+              closeAdminLoginModal();
+              openAdminPanelModal();
+              showToast('Admin Control Panel Unlocked!');
+            } else {
+              errEl.textContent = 'Invalid Mobile Number or Password. Access denied.';
+              errEl.classList.remove('hidden');
+            }
+          } catch (err) {
+            errEl.textContent = 'Network error connecting to Google Apps Script.';
+            errEl.classList.remove('hidden');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = 'Unlock Control Panel';
+          }
+        });
+      }
+
+      // Background multi-device sync every 20 seconds when timer is not actively counting
+      setInterval(() => {
+        if (!timerState.isRunning && !isCloudSaving) {
+          syncFromGoogleDrive(true);
+        }
+      }, 20000);
+
+      // Sync immediately when user switches back to this tab/device
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && !isCloudSaving) {
+          syncFromGoogleDrive(true);
+        }
+      });
+
       renderAll();
       syncFromGoogleDrive();
       resetProfitForm();
       updateTimerUI();
     });
   </script>
+  <div style="margin: 24px auto; text-align: center; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
+    <button type="button" onclick="openUnifiedAdminGate()" style="
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 22px;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #e11d48 100%);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.45);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 28px -4px rgba(225, 29, 72, 0.55)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px -4px rgba(99, 102, 241, 0.45)';">
+      &#128274; Click here to get Admin Control Panel
+    </button>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 6: SERVER-AUTHENTICATED ADMIN LOGIN MODAL (ZERO HARDCODED PASS) -->
+  <!-- ===================================================================== -->
+  <div id="admin-login-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+    <div class="bg-white dark:bg-obsidian-900 rounded-2xl max-w-sm w-full p-6 border border-amber-500/30 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/30">Restricted Access</span>
+          <h3 class="text-lg font-black text-slate-900 dark:text-white mt-1">Admin Control Panel Login</h3>
+        </div>
+        <button type="button" onclick="closeAdminLoginModal()" class="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Verified directly via Google Apps Script server properties.</p>
+      <div id="admin-login-error" class="hidden mb-3 px-3 py-2 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-500 text-xs font-bold">
+        Invalid Mobile Number or Password. Access denied.
+      </div>
+      <form id="unified-admin-login-form" class="space-y-3" autocomplete="off">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Mobile Number</label>
+          <input type="tel" id="unified-admin-mobile" required placeholder="Enter mobile number" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+          <input type="password" id="unified-admin-pass" required placeholder="Enter password" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        </div>
+        <button type="submit" id="unified-admin-submit" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-extrabold shadow-sm transition cursor-pointer">
+          Unlock Control Panel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 7: UNIFIED IN-PAGE ADMIN CONTROL PANEL (FULL CRUD OVERRIDES)    -->
+  <!-- ===================================================================== -->
+  <div id="admin-panel-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/85 backdrop-blur-md p-2 sm:p-4">
+    <div class="bg-white dark:bg-obsidian-900 rounded-2xl max-w-6xl w-full border border-amber-500/35 shadow-2xl flex flex-col max-h-[94vh] overflow-hidden">
+      <!-- Admin Header -->
+      <div class="px-3.5 sm:px-6 py-3 sm:py-3.5 bg-gradient-to-r from-amber-500/15 via-indigo-500/10 to-rose-500/15 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 text-white flex items-center justify-center shadow-sm">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-black text-slate-900 dark:text-white">TimeFlow Admin Control Panel</h3>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">Server Verified</span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">All changes immediately save to Google Drive & update all open screens</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="forcePushCurrentStateToCloud()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-sm transition">
+            Force Cloud Save
+          </button>
+          <button type="button" onclick="logoutAdminSession()" class="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 border border-rose-500/30 text-xs font-bold transition">
+            Lock Panel
+          </button>
+          <button type="button" onclick="closeAdminPanelModal()" class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Sub-Tabs -->
+      <div class="px-4 sm:px-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-1 overflow-x-auto shrink-0 bg-slate-50/70 dark:bg-obsidian-950/60">
+        <button type="button" data-adm-tab="overrides" onclick="switchAdminSubTab('overrides')" class="adm-sub-tab active px-3.5 py-2.5 text-xs font-extrabold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap">
+          Schedule & Study Overrides
+        </button>
+        <button type="button" data-adm-tab="pnl" onclick="switchAdminSubTab('pnl')" class="adm-sub-tab px-3.5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-200 whitespace-nowrap">
+          Profit & PNL Ledger CRUD
+        </button>
+        <button type="button" data-adm-tab="videos" onclick="switchAdminSubTab('videos')" class="adm-sub-tab px-3.5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-200 whitespace-nowrap">
+          Video Vault CRUD
+        </button>
+        <button type="button" data-adm-tab="json" onclick="switchAdminSubTab('json')" class="adm-sub-tab px-3.5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-200 whitespace-nowrap">
+          Raw JSON & Reset
+        </button>
+      </div>
+
+      <!-- Admin Body -->
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-5">
+        <!-- SUBTAB 1: OVERRIDES -->
+        <div id="adm-panel-overrides" class="adm-panel space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700">
+            <div class="text-xs font-bold">
+              Active Editing Date: <span id="adm-active-date-label" class="font-mono font-black text-indigo-500"></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="adminApproveAllForDate()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold">
+                ✓ Approve All Subjects & Rewards Today
+              </button>
+              <button type="button" onclick="adminDeleteDayRecord()" class="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 border border-rose-500/30 text-xs font-bold">
+                Delete Date Record
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Timeline Tasks Delete/Toggle -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 space-y-2.5">
+              <h4 class="text-xs font-black uppercase tracking-wider text-indigo-400">Timeline Blocks (Delete / Toggle)</h4>
+              <div id="adm-tasks-container" class="space-y-2 max-h-72 overflow-y-auto"></div>
+            </div>
+            <!-- Subject & Step Overrides -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 space-y-2.5">
+              <h4 class="text-xs font-black uppercase tracking-wider text-amber-400">Subject & Reward Overrides</h4>
+              <div id="adm-subjects-container" class="space-y-2 max-h-72 overflow-y-auto"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBTAB 2: PROFIT & PNL DELETE / MODIFY -->
+        <div id="adm-panel-pnl" class="adm-panel hidden space-y-4">
+          <div class="text-xs text-slate-500 dark:text-slate-400">
+            Edit any Profit/PNL row in the main Profit Tracker tab or delete unwanted rows directly below:
+          </div>
+          <div class="overflow-x-auto max-h-96 rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-xs text-right border-collapse tabular-nums">
+              <thead class="sticky top-0 bg-slate-100 dark:bg-obsidian-850 font-extrabold">
+                <tr>
+                  <th class="px-3 py-2 text-left">DATE</th>
+                  <th class="px-2.5 py-2">EXPECTED</th>
+                  <th class="px-2.5 py-2">PLAYING</th>
+                  <th class="px-2.5 py-2">PNL</th>
+                  <th class="px-2.5 py-2">VAULT</th>
+                  <th class="px-3 py-2 text-center">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="adm-pnl-tbody" class="divide-y divide-slate-200 dark:divide-slate-800"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUBTAB 3: VIDEOS DELETE -->
+        <div id="adm-panel-videos" class="adm-panel hidden space-y-3">
+          <div id="adm-videos-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- SUBTAB 4: RAW JSON & RESET -->
+        <div id="adm-panel-json" class="adm-panel hidden space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-400">Direct JSON Database State (Syncs to Google Drive on Apply)</span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="adminResetToBaseline()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold">
+                Reset to Clean Baseline
+              </button>
+              <button type="button" onclick="adminApplyRawJson()" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold">
+                Apply & Save JSON
+              </button>
+            </div>
+          </div>
+          <textarea id="adm-raw-json" rows="14" spellcheck="false" class="w-full p-3 rounded-xl bg-slate-950 text-emerald-300 border border-slate-800 font-mono text-xs focus:outline-none"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
