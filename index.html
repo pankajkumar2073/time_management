@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-  
   <meta charset="UTF-8" />
-  <script src="warning.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>TimeFlow Command Center — 24H Study, Video Vault & Profit Matrix</title>
@@ -1465,6 +1463,7 @@
 
       return {
         config: JSON.parse(JSON.stringify(DEFAULT_SUBJECT_CONFIG)),
+        alert: { message: '', active: false, updatedAt: null },
         videos: [
           {
             id: 'vid-seed-1',
@@ -1550,6 +1549,9 @@
             if (!Array.isArray(parsed.videos)) parsed.videos = [];
             if (!Array.isArray(parsed.profitLedger) || parsed.profitLedger.length === 0) {
               parsed.profitLedger = createInitialProfitEntries();
+            }
+            if (!parsed.alert || typeof parsed.alert !== 'object') {
+              parsed.alert = { message: '', active: false, updatedAt: null };
             }
             return parsed;
           }
@@ -1886,7 +1888,22 @@
         </div>
       `).join('');
 
-      // 5. Raw JSON
+      // 5. Daily Alert panel
+      ensureAlertShape();
+      const alertTa = document.getElementById('adm-alert-message');
+      const alertStatus = document.getElementById('adm-alert-status');
+      if (alertTa && document.activeElement !== alertTa) {
+        alertTa.value = appState.alert.message || '';
+      }
+      if (alertStatus) {
+        if (appState.alert.active && appState.alert.message) {
+          alertStatus.innerHTML = `<span class="text-amber-500 font-bold">● ACTIVE</span> — will show on next page open. Updated: ${appState.alert.updatedAt ? new Date(appState.alert.updatedAt).toLocaleString() : '—'}`;
+        } else {
+          alertStatus.innerHTML = `<span class="text-slate-400">● No active alert</span> — popup will not appear.`;
+        }
+      }
+
+      // 6. Raw JSON
       const rawBox = document.getElementById('adm-raw-json');
       if (rawBox && document.activeElement !== rawBox) {
         rawBox.value = JSON.stringify(appState, null, 2);
@@ -1908,7 +1925,7 @@
       saveAppState();
       renderAll();
       renderAdminPanelModal();
-      showToast('Task deleted & synced to Google Drive!');
+      showToast('Task deleted!');
     }
 
     function adminToggleSubjectOverride(subId, mainMins) {
@@ -1989,7 +2006,7 @@
         saveAppState();
         renderAll();
         renderAdminPanelModal();
-        showToast('Raw JSON saved & synced to Google Drive!');
+        showToast('Raw JSON applied & saved!');
       } catch (e) {
         showToast('Invalid JSON: ' + e.message, 'error');
       }
@@ -2000,7 +2017,67 @@
       saveAppState();
       renderAll();
       renderAdminPanelModal();
-      showToast('Reset to baseline & synced to Google Drive!');
+      showToast('Reset to clean baseline!');
+    }
+
+    // --- Daily / Yesterday Alert ---
+    function ensureAlertShape() {
+      if (!appState.alert || typeof appState.alert !== 'object') {
+        appState.alert = { message: '', active: false, updatedAt: null };
+      }
+    }
+
+    function checkAndShowDailyAlert() {
+      ensureAlertShape();
+      const a = appState.alert;
+      if (!a.active || !a.message || !String(a.message).trim()) return;
+      const modal = document.getElementById('daily-alert-modal');
+      const msgEl = document.getElementById('daily-alert-message');
+      if (!modal || !msgEl) return;
+      msgEl.textContent = a.message.trim();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function dismissDailyAlert() {
+      const modal = document.getElementById('daily-alert-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+      // User dismissed — keep message but mark inactive so it doesn't reappear until admin sets a new one
+      ensureAlertShape();
+      appState.alert.active = false;
+      saveAppState();
+    }
+
+    function adminSaveDailyAlert() {
+      ensureAlertShape();
+      const ta = document.getElementById('adm-alert-message');
+      const msg = (ta ? ta.value : '').trim();
+      if (!msg) {
+        showToast('Write a message first, or use Clear Alert.', 'error');
+        return;
+      }
+      appState.alert = {
+        message: msg,
+        active: true,
+        updatedAt: new Date().toISOString()
+      };
+      saveAppState();
+      renderAdminPanelModal();
+      showToast('Daily alert activated! It will show next time the page is opened.');
+    }
+
+    function adminClearDailyAlert() {
+      ensureAlertShape();
+      appState.alert = { message: '', active: false, updatedAt: null };
+      const ta = document.getElementById('adm-alert-message');
+      if (ta) ta.value = '';
+      saveAppState();
+      renderAdminPanelModal();
+      showToast('Alert cleared — no popup will appear.');
     }
 
     /**
@@ -4991,6 +5068,8 @@
       renderAll();
       resetProfitForm();
       updateTimerUI();
+      // Show admin daily alert (if any) after UI is ready
+      setTimeout(() => checkAndShowDailyAlert(), 350);
     });
   </script>
   <div style="margin: 24px auto; text-align: center; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
@@ -5014,6 +5093,29 @@
     " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 28px -4px rgba(225, 29, 72, 0.55)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px -4px rgba(99, 102, 241, 0.45)';">
       &#128274; Click here to get Admin Control Panel
     </button>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- DAILY / YESTERDAY ALERT MODAL (Admin-controlled message)               -->
+  <!-- ===================================================================== -->
+  <div id="daily-alert-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-950/85 backdrop-blur-md p-4">
+    <div class="bg-white dark:bg-obsidian-900 rounded-2xl max-w-md w-full p-6 border border-amber-500/40 shadow-2xl relative overflow-hidden">
+      <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-amber-500/10 blur-2xl pointer-events-none"></div>
+      <div class="flex items-start gap-3 mb-4">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-600 text-white flex items-center justify-center shadow-lg shrink-0">
+          <i data-lucide="bell-ring" class="w-5 h-5"></i>
+        </div>
+        <div class="min-w-0">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">Daily Alert</span>
+          <h3 class="text-lg font-black text-slate-900 dark:text-white mt-1">Message from Admin</h3>
+        </div>
+      </div>
+      <div id="daily-alert-message" class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap mb-6 min-h-[60px]"></div>
+      <button type="button" onclick="dismissDailyAlert()" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-extrabold shadow-sm transition">
+        Got it — Continue to TimeFlow
+      </button>
+    </div>
   </div>
 
   <!-- ===================================================================== -->
@@ -5093,6 +5195,9 @@
         <button type="button" data-adm-tab="videos" onclick="switchAdminSubTab('videos')" class="adm-sub-tab px-3.5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-200 whitespace-nowrap">
           Video Vault CRUD
         </button>
+        <button type="button" data-adm-tab="alert" onclick="switchAdminSubTab('alert')" class="adm-sub-tab px-3.5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-200 whitespace-nowrap">
+          Daily Alert Message
+        </button>
         <button type="button" data-adm-tab="json" onclick="switchAdminSubTab('json')" class="adm-sub-tab px-3.5 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-200 whitespace-nowrap">
           Raw JSON & Reset
         </button>
@@ -5158,9 +5263,40 @@
         </div>
 
         <!-- SUBTAB 4: RAW JSON & RESET -->
+        <!-- SUBTAB: DAILY ALERT MESSAGE -->
+        <div id="adm-panel-alert" class="adm-panel hidden space-y-4">
+          <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25">
+            <h4 class="text-sm font-black text-amber-600 dark:text-amber-400 flex items-center gap-2">
+              <i data-lucide="bell-ring" class="w-4 h-4"></i>
+              Yesterday / Custom Daily Alert
+            </h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Write any custom message (e.g. "Yesterday you wasted 200 minutes on distractions"). 
+              It will appear as a popup the next time the main TimeFlow page is opened. 
+              Leave empty + Clear to show nothing.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Alert Message</label>
+            <textarea id="adm-alert-message" rows="5" placeholder="Example: Yesterday you wasted 200 minutes. Stay focused today!" class="w-full px-3.5 py-3 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none resize-y"></textarea>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="adminSaveDailyAlert()" class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold shadow-sm transition">
+              Save & Activate Alert
+            </button>
+            <button type="button" onclick="adminClearDailyAlert()" class="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-obsidian-850 hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition">
+              Clear Alert (No Popup)
+            </button>
+          </div>
+
+          <div id="adm-alert-status" class="text-xs font-mono text-slate-500 dark:text-slate-400"></div>
+        </div>
+
         <div id="adm-panel-json" class="adm-panel hidden space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="text-xs font-bold text-slate-400">Direct JSON Database State (Syncs to Google Drive on Apply)</span>
+            <span class="text-xs font-bold text-slate-400">Direct JSON Database State (saves to localStorage + timeFlow folder)</span>
             <div class="flex items-center gap-2">
               <button type="button" onclick="adminResetToBaseline()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold">
                 Reset to Clean Baseline
