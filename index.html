@@ -1463,7 +1463,7 @@
 
       return {
         config: JSON.parse(JSON.stringify(DEFAULT_SUBJECT_CONFIG)),
-        alert: { message: '', active: false, updatedAt: null },
+        alert: { message: '', active: false, updatedAt: null, video: null },
         videos: [
           {
             id: 'vid-seed-1',
@@ -1551,8 +1551,9 @@
               parsed.profitLedger = createInitialProfitEntries();
             }
             if (!parsed.alert || typeof parsed.alert !== 'object') {
-              parsed.alert = { message: '', active: false, updatedAt: null };
+              parsed.alert = { message: '', active: false, updatedAt: null, video: null };
             }
+            if (!('video' in parsed.alert)) parsed.alert.video = null;
             return parsed;
           }
         }
@@ -1897,7 +1898,11 @@
       }
       if (alertStatus) {
         if (appState.alert.active && appState.alert.message) {
-          alertStatus.innerHTML = `<span class="text-amber-500 font-bold">● ACTIVE</span> — will show on next page open. Updated: ${appState.alert.updatedAt ? new Date(appState.alert.updatedAt).toLocaleString() : '—'}`;
+          const hasVid = appState.alert.video && (appState.alert.video.youtubeId || appState.alert.video.url || appState.alert.video.isLocalFile);
+          const vidLabel = hasVid
+            ? (appState.alert.video.isLocalFile ? `Local: ${appState.alert.video.localFileName || 'file'}` : (appState.alert.video.youtubeId || 'embed'))
+            : 'text only';
+          alertStatus.innerHTML = `<span class="text-amber-500 font-bold">● ACTIVE</span> — shows on EVERY refresh. Video: <span class="text-rose-400">${vidLabel}</span>. Updated: ${appState.alert.updatedAt ? new Date(appState.alert.updatedAt).toLocaleString() : '—'}`;
         } else {
           alertStatus.innerHTML = `<span class="text-slate-400">● No active alert</span> — popup will not appear.`;
         }
@@ -2023,30 +2028,131 @@
     // --- Daily / Yesterday Alert ---
     function ensureAlertShape() {
       if (!appState.alert || typeof appState.alert !== 'object') {
-        appState.alert = { message: '', active: false, updatedAt: null };
+        appState.alert = { message: '', active: false, updatedAt: null, video: null };
       }
+      if (!('video' in appState.alert)) appState.alert.video = null;
     }
+
+    let alertLockTimer = null;
+    let alertLockSecondsLeft = 0;
+    let alertVideoEnded = false;
 
     function checkAndShowDailyAlert() {
       ensureAlertShape();
       const a = appState.alert;
       if (!a.active || !a.message || !String(a.message).trim()) return;
+
       const modal = document.getElementById('daily-alert-modal');
       const msgEl = document.getElementById('daily-alert-message');
+      const videoWrap = document.getElementById('daily-alert-video-wrap');
+      const videoSlot = document.getElementById('daily-alert-video-slot');
+      const btn = document.getElementById('daily-alert-dismiss-btn');
+      const countdownEl = document.getElementById('daily-alert-countdown');
       if (!modal || !msgEl) return;
+
       msgEl.textContent = a.message.trim();
+      alertVideoEnded = false;
+      if (alertLockTimer) { clearInterval(alertLockTimer); alertLockTimer = null; }
+
+      const hasVideo = a.video && (a.video.youtubeId || a.video.embedSrc || a.video.isLocalFile || a.video.url);
+      if (hasVideo && videoWrap && videoSlot) {
+        videoWrap.classList.remove('hidden');
+        videoSlot.innerHTML = '';
+        if (a.video.isLocalFile && (a.video.localBlobUrl || localVideoBlobRegistry[a.video.id])) {
+          const src = a.video.localBlobUrl || localVideoBlobRegistry[a.video.id];
+          const v = document.createElement('video');
+          v.src = src;
+          v.controls = false;
+          v.autoplay = true;
+          v.playsInline = true;
+          v.className = 'w-full h-full object-contain bg-black';
+          v.addEventListener('ended', () => { alertVideoEnded = true; unlockAlertDismissIfReady(); });
+          videoSlot.appendChild(v);
+          v.play().catch(() => {});
+        } else {
+          const vidId = a.video.youtubeId || extractYouTubeId(a.video.url || a.video.embedSrc || '');
+          let embedSrc = a.video.embedSrc;
+          if (vidId) {
+            embedSrc = buildEngineEmbedUrl(vidId, a.video.preferredEngine || DEFAULT_PLAYER_ENGINE, true);
+          }
+          if (embedSrc) {
+            // Force autoplay + minimal chrome where possible
+            if (embedSrc.indexOf('autoplay=') === -1) {
+              embedSrc += (embedSrc.indexOf('?') >= 0 ? '&' : '?') + 'autoplay=1&mute=0';
+            }
+            videoSlot.innerHTML = `<iframe class="w-full h-full" src="${embedSrc.replace(/"/g, '&quot;')}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+          }
+        }
+        // Lock dismiss for 20s (or until HTML5 video ends, whichever comes first after 20s min)
+        alertLockSecondsLeft = 20;
+        if (btn) {
+          btn.disabled = true;
+          btn.classList.add('opacity-50', 'cursor-not-allowed');
+          btn.textContent = 'Watch the warning — wait 20s';
+        }
+        if (countdownEl) {
+          countdownEl.classList.remove('hidden');
+          countdownEl.textContent = 'Cannot skip for 20 seconds…';
+        }
+        alertLockTimer = setInterval(() => {
+          alertLockSecondsLeft -= 1;
+          if (countdownEl) {
+            countdownEl.textContent = alertLockSecondsLeft > 0
+              ? `Cannot skip for ${alertLockSecondsLeft} seconds…`
+              : (alertVideoEnded ? 'Video finished' : 'You may continue now');
+          }
+          if (alertLockSecondsLeft <= 0) {
+            unlockAlertDismissIfReady();
+          } else if (btn) {
+            btn.textContent = `Watch the warning — wait ${alertLockSecondsLeft}s`;
+          }
+        }, 1000);
+      } else {
+        if (videoWrap) videoWrap.classList.add('hidden');
+        if (videoSlot) videoSlot.innerHTML = '';
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('opacity-50', 'cursor-not-allowed');
+          btn.textContent = 'I Acknowledge — Enter TimeFlow Anyway';
+        }
+        if (countdownEl) countdownEl.classList.add('hidden');
+      }
+
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       if (window.lucide) lucide.createIcons();
     }
 
+    function unlockAlertDismissIfReady() {
+      if (alertLockSecondsLeft > 0 && !alertVideoEnded) return;
+      if (alertLockTimer) { clearInterval(alertLockTimer); alertLockTimer = null; }
+      const btn = document.getElementById('daily-alert-dismiss-btn');
+      const countdownEl = document.getElementById('daily-alert-countdown');
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btn.textContent = 'I Acknowledge — Enter TimeFlow Anyway';
+      }
+      if (countdownEl) {
+        countdownEl.textContent = 'You may continue now';
+      }
+    }
+
     function dismissDailyAlert() {
-      // Only close for this page view. Alert stays active and will reappear on every refresh/reload.
+      // Block if still locked
+      if (alertLockSecondsLeft > 0 && !alertVideoEnded) {
+        showToast('Watch the warning video — cannot skip yet.', 'error');
+        return;
+      }
+      if (alertLockTimer) { clearInterval(alertLockTimer); alertLockTimer = null; }
       const modal = document.getElementById('daily-alert-modal');
+      const videoSlot = document.getElementById('daily-alert-video-slot');
+      if (videoSlot) videoSlot.innerHTML = ''; // stop playback
       if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       }
+      // Alert stays active — will show again on every refresh until Admin clears it
     }
 
     function adminSaveDailyAlert() {
@@ -2057,21 +2163,65 @@
         showToast('Write a message first, or use Clear Alert.', 'error');
         return;
       }
+
+      const urlVal = (document.getElementById('adm-alert-video-url')?.value || '').trim();
+      const embedVal = (document.getElementById('adm-alert-video-embed')?.value || '').trim();
+      const fileInp = document.getElementById('adm-alert-video-file');
+      const localFile = fileInp && fileInp.files && fileInp.files[0];
+
+      let video = null;
+      if (localFile) {
+        const blobUrl = URL.createObjectURL(localFile);
+        const vidId = 'alert-vid-' + Date.now();
+        localVideoBlobRegistry[vidId] = blobUrl;
+        video = {
+          id: vidId,
+          isLocalFile: true,
+          localFileName: localFile.name,
+          localBlobUrl: blobUrl
+        };
+      } else if (urlVal || embedVal) {
+        const parsed = typeof parseYouTubeLinkOrEmbed === 'function'
+          ? parseYouTubeLinkOrEmbed(urlVal, embedVal)
+          : null;
+        if (parsed) {
+          video = {
+            youtubeId: parsed.videoId,
+            url: parsed.watchUrl,
+            embedSrc: parsed.embedSrc,
+            preferredEngine: typeof activePreviewEngine !== 'undefined' ? activePreviewEngine : 'youtube',
+            isLocalFile: false
+          };
+        } else if (urlVal) {
+          // Non-YouTube direct video URL
+          video = { url: urlVal, embedSrc: urlVal, isLocalFile: false };
+        }
+      }
+
       appState.alert = {
         message: msg,
         active: true,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        video: video
       };
       saveAppState();
       renderAdminPanelModal();
-      showToast('Daily alert activated! It will appear on EVERY refresh until you Clear it.');
+      showToast(video
+        ? 'Alert + warning video activated! Locked for 20s on every refresh.'
+        : 'Daily alert activated (text only). Shows on EVERY refresh until cleared.');
     }
 
     function adminClearDailyAlert() {
       ensureAlertShape();
-      appState.alert = { message: '', active: false, updatedAt: null };
+      appState.alert = { message: '', active: false, updatedAt: null, video: null };
       const ta = document.getElementById('adm-alert-message');
       if (ta) ta.value = '';
+      const u = document.getElementById('adm-alert-video-url');
+      const e = document.getElementById('adm-alert-video-embed');
+      const f = document.getElementById('adm-alert-video-file');
+      if (u) u.value = '';
+      if (e) e.value = '';
+      if (f) f.value = '';
       saveAppState();
       renderAdminPanelModal();
       showToast('Alert cleared — no popup will appear.');
@@ -5115,12 +5265,20 @@
           </div>
         </div>
 
-        <div class="rounded-xl bg-black/50 border border-red-500/40 p-4 mb-6">
-          <div id="daily-alert-message" class="text-[15px] sm:text-base text-red-50 leading-relaxed whitespace-pre-wrap font-semibold min-h-[72px]"></div>
+        <div class="rounded-xl bg-black/50 border border-red-500/40 p-4 mb-4">
+          <div id="daily-alert-message" class="text-[15px] sm:text-base text-red-50 leading-relaxed whitespace-pre-wrap font-semibold min-h-[60px]"></div>
+        </div>
+
+        <div id="daily-alert-video-wrap" class="hidden mb-4">
+          <div class="text-[10px] font-black uppercase tracking-widest text-red-400 mb-1.5 flex items-center gap-1.5">
+            <i data-lucide="play-circle" class="w-3.5 h-3.5"></i> Mandatory Warning Video
+          </div>
+          <div id="daily-alert-video-slot" class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-red-600/50 shadow-[0_0_30px_rgba(220,38,38,0.35)]"></div>
+          <p id="daily-alert-countdown" class="mt-2 text-center text-[11px] font-black uppercase tracking-wider text-amber-400">Cannot skip for 20 seconds…</p>
         </div>
 
         <div class="flex flex-col gap-2.5">
-          <button type="button" onclick="dismissDailyAlert()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-700 via-rose-700 to-red-800 hover:from-red-600 hover:to-rose-600 text-white text-sm font-black uppercase tracking-wider shadow-[0_0_20px_rgba(220,38,38,0.45)] border border-red-400/30 transition">
+          <button type="button" id="daily-alert-dismiss-btn" onclick="dismissDailyAlert()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-700 via-rose-700 to-red-800 hover:from-red-600 hover:to-rose-600 text-white text-sm font-black uppercase tracking-wider shadow-[0_0_20px_rgba(220,38,38,0.45)] border border-red-400/30 transition">
             I Acknowledge — Enter TimeFlow Anyway
           </button>
           <p class="text-center text-[10px] text-red-400/80 font-bold uppercase tracking-widest">This warning will return on every page reload until Admin clears it</p>
@@ -5291,7 +5449,29 @@
 
           <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">Alert Message</label>
-            <textarea id="adm-alert-message" rows="5" placeholder="Example: Yesterday you wasted 200 minutes. Stay focused today!" class="w-full px-3.5 py-3 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none resize-y"></textarea>
+            <textarea id="adm-alert-message" rows="4" placeholder="Example: Yesterday you wasted 200 minutes. Stay focused today!" class="w-full px-3.5 py-3 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none resize-y"></textarea>
+          </div>
+
+          <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/25 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h5 class="text-xs font-black uppercase tracking-wider text-rose-500 flex items-center gap-1.5">
+                <i data-lucide="youtube" class="w-3.5 h-3.5"></i> Optional Warning Video
+              </h5>
+              <span class="text-[10px] font-bold text-slate-400">Leave empty = text only, no video</span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">If set, the video auto-plays and user cannot dismiss for 20 seconds (or until video ends).</p>
+            <div>
+              <label class="block text-[11px] font-bold mb-1">YouTube Link</label>
+              <input type="url" id="adm-alert-video-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold mb-1">Or paste iframe embed code</label>
+              <textarea id="adm-alert-video-embed" rows="2" placeholder='&lt;iframe src="https://www.youtube.com/embed/..."&gt;...' class="w-full px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold mb-1">Or local video file</label>
+              <input type="file" id="adm-alert-video-file" accept="video/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-rose-600 file:text-white file:text-xs file:font-bold" />
+            </div>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
