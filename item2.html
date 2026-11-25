@@ -94,8 +94,13 @@
         <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <span id="storage-sync-indicator" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-300 text-[11px] font-mono font-bold">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Storage Synced</span>
+            <span>Local Ready</span>
           </span>
+
+          <button type="button" onclick="connectTimeFlowFolder()" title="Link a timeFlow folder for automatic silent JSON overwrite" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 text-amber-600 dark:text-amber-300 transition">
+            <i data-lucide="folder-sync" class="w-3.5 h-3.5"></i>
+            <span>Link Folder</span>
+          </button>
 
           <button type="button" onclick="triggerImportJson()" title="Import / Load JSON Backup from TimeFlow Command Center" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-sky-500/15 border border-sky-500/30 hover:bg-sky-500/25 text-sky-600 dark:text-sky-300 transition">
             <i data-lucide="upload" class="w-3.5 h-3.5"></i>
@@ -891,23 +896,95 @@
       return seeded;
     }
 
-    const GOOGLE_DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbzUXVHBrVax7J-ZIjqvSY59anZvBK1AVrKH2SXWQbI7CmenR4z72I_enYqx6GKk-x2b/exec';
+    const BACKUP_FILENAME = 'timeflow_shared_db.json';
+    const IDB_NAME = 'timeflow_fs_handles';
+    const IDB_STORE = 'handles';
+    let dirHandle = null;
+    let lastAutoDownloadTs = 0;
 
-    async function syncFromDriveToMirror() {
+    function openIDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function persistDirHandle(handle) {
       try {
-        const res = await fetch(GOOGLE_DRIVE_API_URL);
-        const cloudData = await res.json();
-        if (cloudData && (cloudData.days || cloudData.config || cloudData.data)) {
-          appState = normalizeStateSchema(cloudData);
-          const serialized = JSON.stringify(appState);
-          localStorage.setItem(PRIMARY_STORAGE_KEY, serialized);
-          localStorage.setItem(LEGACY_STORAGE_KEY, serialized);
-          resetAdminPnlForm();
-          renderAll();
-          showToast('Synced latest state from Google Drive!');
+        const db = await openIDB();
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(handle, 'timeFlowDir');
+        await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+        db.close();
+      } catch (e) { console.warn(e); }
+    }
+
+    async function restoreDirHandle() {
+      try {
+        const db = await openIDB();
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const req = tx.objectStore(IDB_STORE).get('timeFlowDir');
+        const handle = await new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); });
+        db.close();
+        if (handle) {
+          const perm = await handle.queryPermission({ mode: 'readwrite' });
+          if (perm === 'granted' || (await handle.requestPermission({ mode: 'readwrite' })) === 'granted') {
+            dirHandle = handle;
+            return true;
+          }
         }
-      } catch (err) {
-        console.warn('Drive fetch skipped/failed, using local state:', err);
+      } catch (e) { console.warn(e); }
+      return false;
+    }
+
+    async function writeBackupToFolder(state) {
+      if (!dirHandle) return false;
+      try {
+        const fileHandle = await dirHandle.getFileHandle(BACKUP_FILENAME, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(state, null, 2));
+        await writable.close();
+        return true;
+      } catch (e) {
+        console.warn('Folder write failed', e);
+        dirHandle = null;
+        return false;
+      }
+    }
+
+    function downloadFixedBackup(state) {
+      try {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = BACKUP_FILENAME;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (e) { console.error(e); }
+    }
+
+    async function connectTimeFlowFolder() {
+      if (!window.showDirectoryPicker) {
+        showToast('Folder linking not supported in this browser. Use Export JSON.', 'error');
+        return;
+      }
+      try {
+        dirHandle = await window.showDirectoryPicker({ id: 'timeflow-folder', mode: 'readwrite', startIn: 'documents' });
+        await persistDirHandle(dirHandle);
+        await writeBackupToFolder(appState);
+        showToast('timeFlow folder linked — future saves overwrite timeflow_shared_db.json');
+        const ind = document.getElementById('storage-sync-indicator');
+        if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>timeFlow Linked</span>';
+      } catch (e) {
+        if (e.name !== 'AbortError') showToast('Link failed: ' + (e.message || e.name), 'error');
       }
     }
 
@@ -920,15 +997,22 @@
         console.error('Storage save error:', e);
       }
 
-      try {
-        await fetch(GOOGLE_DRIVE_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(stateObj)
-        });
-      } catch (err) {
-        console.error('Google Drive POST failed:', err);
-        showToast('Saved locally (Drive sync failed)', 'error');
+      const wrote = await writeBackupToFolder(stateObj);
+      if (!wrote) {
+        const now = Date.now();
+        if (now - lastAutoDownloadTs > 8000) {
+          downloadFixedBackup(stateObj);
+          lastAutoDownloadTs = now;
+        }
+      }
+    }
+
+    async function syncFromDriveToMirror() {
+      // No-op: Google Apps Script dependency removed. State lives in localStorage + optional timeFlow folder.
+      const ok = await restoreDirHandle();
+      if (ok) {
+        const ind = document.getElementById('storage-sync-indicator');
+        if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>timeFlow Linked</span>';
       }
     }
 

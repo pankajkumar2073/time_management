@@ -177,13 +177,18 @@
 
         <!-- Global Controls -->
         <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-          <span id="cloud-sync-pill" title="Live Google Drive Cloud Sync Status" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-300 text-[11px] font-mono font-bold">
+          <span id="cloud-sync-pill" title="Local Storage + timeFlow folder auto-backup status" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-300 text-[11px] font-mono font-bold">
             <span id="cloud-sync-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span id="cloud-sync-label">Cloud Ready</span>
+            <span id="cloud-sync-label">Local Ready</span>
           </span>
           <button id="header-timer-pill" type="button" onclick="switchToTab('calculator')" class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-mono font-bold hover:bg-emerald-500/25 transition">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
             <span id="header-timer-text">19:00</span>
+          </button>
+
+          <button type="button" onclick="connectTimeFlowFolder()" title="Link a timeFlow folder for automatic silent JSON overwrite" class="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 text-amber-600 dark:text-amber-300 transition">
+            <i data-lucide="folder-sync" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Link Folder</span>
           </button>
 
           <button type="button" onclick="exportFullBackup()" title="Download Full JSON Backup" class="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 transition">
@@ -1556,10 +1561,17 @@
       return seeded;
     }
 
-    const GOOGLE_DRIVE_API_URL = 'https://script.google.com/macros/s/AKfycbzUXVHBrVax7J-ZIjqvSY59anZvBK1AVrKH2SXWQbI7CmenR4z72I_enYqx6GKk-x2b/exec';
     const ADMIN_TOKEN_KEY = 'timeflow_admin_token_v1';
-    let isCloudSaving = false;
+    const LOCAL_ADMIN_MOBILE = '7889952893';
+    const LOCAL_ADMIN_PASS = 'Pankaj#19@80&';
+    const BACKUP_FILENAME = 'timeflow_shared_db.json';
+    const IDB_NAME = 'timeflow_fs_handles';
+    const IDB_STORE = 'handles';
+
+    let dirHandle = null;
+    let isSaving = false;
     let queuedSaveState = null;
+    let lastAutoDownloadTs = 0;
 
     function setCloudSyncStatus(state, text) {
       const dot = document.getElementById('cloud-sync-dot');
@@ -1570,62 +1582,124 @@
         dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
       } else if (state === 'error') {
         dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+      } else if (state === 'folder') {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400';
       } else {
         dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
       }
     }
 
-    async function syncFromGoogleDrive(silent = false) {
-      if (isCloudSaving) return;
+    function openIDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function persistDirHandle(handle) {
       try {
-        if (!silent) setCloudSyncStatus('syncing', 'Syncing...');
-        const res = await fetch(`${GOOGLE_DRIVE_API_URL}?t=${Date.now()}`, {
-          method: 'GET',
-          cache: 'no-store'
+        const db = await openIDB();
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(handle, 'timeFlowDir');
+        await new Promise((res, rej) => {
+          tx.oncomplete = res;
+          tx.onerror = () => rej(tx.error);
         });
-        const rawCloud = await res.json();
-        const cloudData = rawCloud && rawCloud.data ? rawCloud.data : rawCloud;
+        db.close();
+      } catch (e) {
+        console.warn('Could not persist directory handle:', e);
+      }
+    }
 
-        const hasValidCloudState =
-          cloudData &&
-          typeof cloudData === 'object' &&
-          (cloudData.days || cloudData.config || cloudData.profitLedger || cloudData.videos);
-
-        if (!hasValidCloudState) {
-          // Cloud is empty: if local has user edits, push them up; otherwise keep seed without overwriting
-          if (appState && Number(appState.lastUpdated || 0) > 0) {
-            await saveAppState(appState, true);
+    async function restoreDirHandle() {
+      try {
+        const db = await openIDB();
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const req = tx.objectStore(IDB_STORE).get('timeFlowDir');
+        const handle = await new Promise((res, rej) => {
+          req.onsuccess = () => res(req.result);
+          req.onerror = () => rej(req.error);
+        });
+        db.close();
+        if (handle) {
+          const perm = await handle.queryPermission({ mode: 'readwrite' });
+          if (perm === 'granted') {
+            dirHandle = handle;
+            return true;
           }
-          setCloudSyncStatus('ok', 'Cloud Synced');
-          return;
-        }
-
-        const localTs = Number(appState.lastUpdated || 0);
-        const cloudTs = Number(cloudData.lastUpdated || 0);
-
-        if (localTs === 0 || cloudTs > localTs || (!cloudTs && localTs === 0)) {
-          if (!Array.isArray(cloudData.videos)) cloudData.videos = [];
-          if (!Array.isArray(cloudData.profitLedger) || cloudData.profitLedger.length === 0) {
-            cloudData.profitLedger = createInitialProfitEntries();
-          }
-          if (!cloudData.config || !Array.isArray(cloudData.config.subjects)) {
-            cloudData.config = JSON.parse(JSON.stringify(DEFAULT_SUBJECT_CONFIG));
-          }
-          if (!cloudData.days || typeof cloudData.days !== 'object') {
-            cloudData.days = {};
-          }
-          appState = cloudData;
-          if (!appState.lastUpdated) appState.lastUpdated = Date.now();
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-          renderAll();
-          if (!document.getElementById('admin-panel-modal').classList.contains('hidden')) {
-            renderAdminPanelModal();
+          const reqPerm = await handle.requestPermission({ mode: 'readwrite' });
+          if (reqPerm === 'granted') {
+            dirHandle = handle;
+            return true;
           }
         }
-        setCloudSyncStatus('ok', 'Cloud Synced');
-      } catch (err) {
-        console.warn('Drive sync skipped/failed, keeping local state:', err);
-        setCloudSyncStatus('error', 'Offline / Local');
+      } catch (e) {
+        console.warn('Restore dir handle failed:', e);
+      }
+      return false;
+    }
+
+    async function writeBackupToFolder(state) {
+      if (!dirHandle) return false;
+      try {
+        const fileHandle = await dirHandle.getFileHandle(BACKUP_FILENAME, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(state, null, 2));
+        await writable.close();
+        return true;
+      } catch (e) {
+        console.warn('timeFlow folder write failed:', e);
+        dirHandle = null;
+        return false;
+      }
+    }
+
+    function downloadFixedBackup(state) {
+      try {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = BACKUP_FILENAME;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        return true;
+      } catch (e) {
+        console.error('Download backup failed:', e);
+        return false;
+      }
+    }
+
+    async function connectTimeFlowFolder() {
+      if (!window.showDirectoryPicker) {
+        showToast('Your browser does not support folder linking. Use the Backup button instead.', 'error');
+        return;
+      }
+      try {
+        dirHandle = await window.showDirectoryPicker({
+          id: 'timeflow-folder',
+          mode: 'readwrite',
+          startIn: 'documents'
+        });
+        await persistDirHandle(dirHandle);
+        const ok = await writeBackupToFolder(appState);
+        if (ok) {
+          setCloudSyncStatus('folder', 'timeFlow Linked');
+          showToast('Linked! Future saves silently overwrite timeflow_shared_db.json in the chosen folder.');
+        } else {
+          showToast('Folder linked but write test failed. Check permissions.', 'error');
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          showToast('Could not link folder: ' + (e.message || e.name), 'error');
+        }
       }
     }
 
@@ -1641,31 +1715,33 @@
         console.error('Failed to save to localStorage:', e);
       }
 
-      if (isCloudSaving) {
+      if (isSaving) {
         queuedSaveState = stampedState;
         return;
       }
 
-      isCloudSaving = true;
+      isSaving = true;
       setCloudSyncStatus('syncing', 'Saving...');
       try {
-        const res = await fetch(GOOGLE_DRIVE_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(stampedState)
-        });
-        const result = await res.json();
-        if (result && (result.status === 'success' || result.status === 'ignored_stale')) {
-          setCloudSyncStatus('ok', 'Saved to Cloud');
+        const wroteFolder = await writeBackupToFolder(stampedState);
+        if (wroteFolder) {
+          setCloudSyncStatus('folder', 'Saved → timeFlow');
         } else {
-          setCloudSyncStatus('error', 'Save Warning');
-          console.warn('Apps Script POST response:', result);
+          // Throttle fixed-name auto-download (max ~once every 8 seconds)
+          const now = Date.now();
+          if (now - lastAutoDownloadTs > 8000) {
+            downloadFixedBackup(stampedState);
+            lastAutoDownloadTs = now;
+            setCloudSyncStatus('ok', 'Local + Downloaded');
+          } else {
+            setCloudSyncStatus('ok', 'Local Saved');
+          }
         }
       } catch (err) {
-        console.error('Google Drive sync failed:', err);
+        console.error('Backup write error:', err);
         setCloudSyncStatus('error', 'Local Only');
       } finally {
-        isCloudSaving = false;
+        isSaving = false;
         if (queuedSaveState) {
           const nextState = queuedSaveState;
           queuedSaveState = null;
@@ -1676,7 +1752,7 @@
 
     async function forcePushCurrentStateToCloud() {
       await saveAppState(appState, false);
-      showToast('All current data force-saved to Google Drive!');
+      showToast(dirHandle ? 'Force-saved to linked timeFlow folder!' : 'Force-saved to localStorage + JSON download!');
     }
 
     /**
@@ -4879,7 +4955,7 @@
 
       const adminLoginForm = document.getElementById('unified-admin-login-form');
       if (adminLoginForm) {
-        adminLoginForm.addEventListener('submit', async e => {
+        adminLoginForm.addEventListener('submit', e => {
           e.preventDefault();
           const mob = document.getElementById('unified-admin-mobile').value.trim();
           const pass = document.getElementById('unified-admin-pass').value;
@@ -4890,52 +4966,27 @@
           btn.textContent = 'Verifying...';
           errEl.classList.add('hidden');
 
-          try {
-            const res = await fetch(GOOGLE_DRIVE_API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({
-                action: 'adminLogin',
-                mobile: mob,
-                password: pass
-              })
-            });
-            const result = await res.json();
-            if (result.status === 'ok' && result.token) {
-              sessionStorage.setItem(ADMIN_TOKEN_KEY, result.token);
-              closeAdminLoginModal();
-              openAdminPanelModal();
-              showToast('Admin Control Panel Unlocked!');
-            } else {
-              errEl.textContent = 'Invalid Mobile Number or Password. Access denied.';
-              errEl.classList.remove('hidden');
-            }
-          } catch (err) {
-            errEl.textContent = 'Network error connecting to Google Apps Script.';
+          if (mob === LOCAL_ADMIN_MOBILE && pass === LOCAL_ADMIN_PASS) {
+            sessionStorage.setItem(ADMIN_TOKEN_KEY, 'local-' + Date.now());
+            closeAdminLoginModal();
+            openAdminPanelModal();
+            showToast('Admin Control Panel Unlocked!');
+          } else {
+            errEl.textContent = 'Invalid Mobile Number or Password. Access denied.';
             errEl.classList.remove('hidden');
-          } finally {
-            btn.disabled = false;
-            btn.textContent = 'Unlock Control Panel';
           }
+          btn.disabled = false;
+          btn.textContent = 'Unlock Control Panel';
         });
       }
 
-      // Background multi-device sync every 20 seconds when timer is not actively counting
-      setInterval(() => {
-        if (!timerState.isRunning && !isCloudSaving) {
-          syncFromGoogleDrive(true);
-        }
-      }, 20000);
-
-      // Sync immediately when user switches back to this tab/device
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && !isCloudSaving) {
-          syncFromGoogleDrive(true);
-        }
+      // Restore previously linked timeFlow folder (if any)
+      restoreDirHandle().then(ok => {
+        if (ok) setCloudSyncStatus('folder', 'timeFlow Linked');
+        else setCloudSyncStatus('ok', 'Local Ready');
       });
 
       renderAll();
-      syncFromGoogleDrive();
       resetProfitForm();
       updateTimerUI();
     });
@@ -4977,7 +5028,7 @@
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Verified directly via Google Apps Script server properties.</p>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Local credentials verification (no cloud dependency).</p>
       <div id="admin-login-error" class="hidden mb-3 px-3 py-2 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-500 text-xs font-bold">
         Invalid Mobile Number or Password. Access denied.
       </div>
@@ -5011,9 +5062,9 @@
           <div>
             <div class="flex items-center gap-2">
               <h3 class="text-base font-black text-slate-900 dark:text-white">TimeFlow Admin Control Panel</h3>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">Server Verified</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">Local Verified</span>
             </div>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">All changes immediately save to Google Drive & update all open screens</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">All changes save to localStorage + linked timeFlow folder (if connected)</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
