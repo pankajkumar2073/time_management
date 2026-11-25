@@ -111,6 +111,43 @@
         font-size: 0.7rem !important;
       }
     }
+
+    @keyframes horrorBorderPulse {
+      0%, 100% {
+        box-shadow: 0 0 35px rgba(220, 38, 38, 0.75), 0 0 80px rgba(153, 27, 27, 0.45), inset 0 0 30px rgba(220, 38, 38, 0.35);
+        border-color: #ef4444;
+      }
+      50% {
+        box-shadow: 0 0 65px rgba(239, 68, 68, 0.98), 0 0 130px rgba(185, 28, 28, 0.75), inset 0 0 50px rgba(220, 38, 38, 0.6);
+        border-color: #fca5a5;
+      }
+    }
+    @keyframes horrorShake {
+      0%, 92%, 100% { transform: translate3d(0, 0, 0); }
+      93% { transform: translate3d(-4px, 1px, 0) rotate(-0.4deg); }
+      95% { transform: translate3d(4px, -1px, 0) rotate(0.4deg); }
+      97% { transform: translate3d(-3px, -1px, 0); }
+      99% { transform: translate3d(3px, 1px, 0); }
+    }
+    @keyframes horrorFlicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+      20%, 24%, 55% { opacity: 0.45; }
+    }
+    .horror-modal-card {
+      animation: horrorBorderPulse 1.8s infinite ease-in-out, horrorShake 4.5s infinite ease-in-out;
+    }
+    .horror-flicker {
+      animation: horrorFlicker 3.2s infinite;
+    }
+    .horror-scanlines {
+      background-image: repeating-linear-gradient(
+        0deg,
+        rgba(255, 0, 0, 0.06) 0px,
+        rgba(255, 0, 0, 0.06) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-obsidian-950 dark:text-slate-100 ambient-bg min-h-screen flex flex-col overflow-x-hidden transition-colors duration-300 selection:bg-indigo-500 selection:text-white">
@@ -1621,7 +1658,7 @@
       }
     }
 
-    async function restoreDirHandle() {
+    async function restoreDirHandle(allowPrompt = false) {
       try {
         const db = await openIDB();
         const tx = db.transaction(IDB_STORE, 'readonly');
@@ -1637,10 +1674,12 @@
             dirHandle = handle;
             return true;
           }
-          const reqPerm = await handle.requestPermission({ mode: 'readwrite' });
-          if (reqPerm === 'granted') {
-            dirHandle = handle;
-            return true;
+          if (allowPrompt) {
+            const reqPerm = await handle.requestPermission({ mode: 'readwrite' });
+            if (reqPerm === 'granted') {
+              dirHandle = handle;
+              return true;
+            }
           }
         }
       } catch (e) {
@@ -2025,7 +2064,7 @@
       showToast('Reset to clean baseline!');
     }
 
-    // --- Daily / Yesterday Alert ---
+    // --- Daily / Yesterday Scary Warning & Original-Location Local Video ---
     function ensureAlertShape() {
       if (!appState.alert || typeof appState.alert !== 'object') {
         appState.alert = { message: '', active: false, updatedAt: null, video: null };
@@ -2033,8 +2072,8 @@
       if (!('video' in appState.alert)) appState.alert.video = null;
     }
 
-    // Alert local video: store ONLY a FileSystemFileHandle (points to original file on disk).
-    // Never stores video bytes in the browser — avoids mobile hang / storage bloat.
+    // Store ONLY a FileSystemFileHandle pointing to the original file on disk.
+    // Zero video bytes are ever copied or stored inside browser storage.
     const ALERT_HANDLE_IDB = 'timeflow_alert_handles_v1';
     const ALERT_HANDLE_STORE = 'handles';
     const ALERT_FILE_HANDLE_KEY = 'daily_alert_video_file';
@@ -2061,7 +2100,7 @@
       });
     }
 
-    async function loadAlertFileHandle() {
+    async function getStoredAlertFileHandle() {
       try {
         const db = await openAlertHandleIDB();
         const handle = await new Promise((resolve, reject) => {
@@ -2070,16 +2109,26 @@
           req.onsuccess = () => { db.close(); resolve(req.result || null); };
           req.onerror = () => { db.close(); reject(req.error); };
         });
-        if (!handle) return null;
-        // Re-verify permission
-        let perm = await handle.queryPermission({ mode: 'read' });
-        if (perm !== 'granted') {
-          perm = await handle.requestPermission({ mode: 'read' });
-        }
-        if (perm !== 'granted') return null;
-        return handle;
+        return handle || null;
       } catch (e) {
-        console.warn('loadAlertFileHandle', e);
+        console.warn('getStoredAlertFileHandle error:', e);
+        return null;
+      }
+    }
+
+    async function loadAlertFileHandle(allowGesturePrompt = false) {
+      const handle = await getStoredAlertFileHandle();
+      if (!handle) return null;
+      try {
+        let perm = await handle.queryPermission({ mode: 'read' });
+        if (perm === 'granted') return handle;
+        if (allowGesturePrompt) {
+          perm = await handle.requestPermission({ mode: 'read' });
+          if (perm === 'granted') return handle;
+        }
+        return null;
+      } catch (e) {
+        console.warn('loadAlertFileHandle error:', e);
         return null;
       }
     }
@@ -2096,31 +2145,34 @@
       } catch (e) { console.warn(e); }
     }
 
-    /** Read File from original disk path via handle, or from linked timeFlow folder by filename */
-    async function resolveAlertLocalFile(videoMeta) {
-      // 1) Persisted FileSystemFileHandle → original file path
-      const handle = await loadAlertFileHandle();
+    /** Stream File directly from original disk location via handle or linked timeFlow folder */
+    async function resolveAlertLocalFile(videoMeta, allowGesturePrompt = false) {
+      // 1) Direct FileSystemFileHandle -> reads straight from original disk location
+      const handle = await loadAlertFileHandle(allowGesturePrompt);
       if (handle) {
         try {
           const file = await handle.getFile();
-          return file;
+          if (file) return file;
         } catch (e) {
-          console.warn('handle.getFile failed', e);
+          console.warn('handle.getFile failed:', e);
         }
       }
-      // 2) Linked timeFlow folder + filename (video sits in that folder, not copied)
+      // 2) Linked timeFlow folder -> reads file by exact name from original folder
+      if (!dirHandle) {
+        await restoreDirHandle(allowGesturePrompt);
+      }
       if (dirHandle && videoMeta && videoMeta.localFileName) {
         try {
           const fh = await dirHandle.getFileHandle(videoMeta.localFileName);
           const file = await fh.getFile();
-          return file;
+          if (file) return file;
         } catch (e) {
-          console.warn('timeFlow folder file read failed', e);
+          console.warn('timeFlow folder file read failed:', e);
         }
       }
-      // 3) Same-session only memory registry
+      // 3) Same-session memory fallback
       const mem = videoMeta && videoMeta.id && localVideoBlobRegistry[videoMeta.id];
-      if (mem) return mem; // may be blob URL string — caller handles
+      if (mem) return mem;
       return null;
     }
 
@@ -2135,7 +2187,7 @@
       }
     }
 
-    function playLocalAlertVideoElement(videoSlot, source) {
+    function playLocalAlertVideoElement(videoSlot, source, fileNameLabel = '') {
       if (alertVideoForceTimer) { clearInterval(alertVideoForceTimer); alertVideoForceTimer = null; }
       revokeAlertSessionUrl();
 
@@ -2166,10 +2218,10 @@
 
       const overlay = document.createElement('div');
       overlay.id = 'alert-video-tap-overlay';
-      overlay.style.cssText = 'position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(0,0,0,0.72);cursor:pointer;';
-      overlay.innerHTML = '<div style="width:64px;height:64px;border-radius:9999px;background:#dc2626;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(220,38,38,0.7);font-size:28px;">▶</div>'
-        + '<div style="color:#fff;font-weight:900;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;">Tap to play warning video</div>'
-        + '<div style="color:#fca5a5;font-size:11px;font-weight:700;">Played from your original file — not stored in browser</div>';
+      overlay.style.cssText = 'position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(12,0,2,0.84);cursor:pointer;padding:16px;text-align:center;';
+      overlay.innerHTML = '<div style="width:68px;height:68px;border-radius:9999px;background:#dc2626;display:flex;align-items:center;justify-content:center;box-shadow:0 0 35px rgba(239,68,68,0.9);font-size:28px;color:#fff;">▶</div>'
+        + '<div style="color:#fecaca;font-weight:900;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;">Tap to Play Warning Video</div>'
+        + '<div style="color:#fca5a5;font-size:11px;font-weight:700;font-family:monospace;">Streaming directly from original location' + (fileNameLabel ? ' • ' + escapeHtml(fileNameLabel) : '') + '</div>';
 
       const hideOverlayAndUnmute = () => {
         overlay.style.display = 'none';
@@ -2191,7 +2243,7 @@
       v.addEventListener('playing', () => hideOverlayAndUnmute());
       v.addEventListener('error', () => {
         overlay.style.display = 'flex';
-        overlay.innerHTML = '<div style="color:#fca5a5;font-weight:800;font-size:12px;text-align:center;padding:12px;">Could not play file. Use MP4 (H.264). Re-pick the file in Admin if path changed.</div>';
+        overlay.innerHTML = '<div style="color:#fca5a5;font-weight:800;font-size:12px;text-align:center;padding:12px;">Could not play file from disk. Use MP4 (H.264) or re-pick the file in Admin if moved.</div>';
       });
 
       videoSlot.appendChild(v);
@@ -2223,13 +2275,59 @@
       return v;
     }
 
-    /** Admin: pick video from disk and keep a handle to the ORIGINAL path (no copy into browser). */
+    async function renderLocalAlertVideoIntoSlot(videoSlot, videoMeta, allowGesturePrompt = false) {
+      const badgeEl = document.getElementById('daily-alert-file-badge');
+      if (badgeEl && videoMeta && videoMeta.localFileName) {
+        badgeEl.textContent = videoMeta.localFileName;
+      }
+
+      videoSlot.innerHTML = '<div class="w-full h-full flex items-center justify-center text-red-300 text-xs font-mono font-bold bg-black p-4 text-center">Reading original video file from disk…</div>';
+
+      const resolved = await resolveAlertLocalFile(videoMeta, allowGesturePrompt);
+      if (resolved && (resolved instanceof Blob || resolved instanceof File)) {
+        playLocalAlertVideoElement(videoSlot, resolved, resolved.name || videoMeta?.localFileName || '');
+        return true;
+      }
+      if (typeof resolved === 'string' && resolved) {
+        playLocalAlertVideoElement(videoSlot, resolved, videoMeta?.localFileName || '');
+        return true;
+      }
+
+      // If handle is saved in IndexedDB, browser security requires a single user click after refresh to re-authorize disk read
+      const storedHandle = await getStoredAlertFileHandle();
+      if (storedHandle) {
+        videoSlot.innerHTML = '';
+        const box = document.createElement('div');
+        box.className = 'w-full h-full flex flex-col items-center justify-center gap-3 p-4 bg-black text-center';
+        box.innerHTML = `
+          <div class="text-xs font-black text-red-400 uppercase tracking-wider">Disk Permission Required After Page Refresh</div>
+          <div class="text-[11px] font-mono text-red-200/85">${escapeHtml(videoMeta?.localFileName || storedHandle.name || 'Linked Video')}</div>
+        `;
+        const authBtn = document.createElement('button');
+        authBtn.type = 'button';
+        authBtn.className = 'px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-black uppercase tracking-wider shadow-[0_0_25px_rgba(220,38,38,0.75)] cursor-pointer';
+        authBtn.textContent = '🔓 Allow & Play From Original Location';
+        authBtn.addEventListener('click', async () => {
+          await renderLocalAlertVideoIntoSlot(videoSlot, videoMeta, true);
+        });
+        box.appendChild(authBtn);
+        videoSlot.appendChild(box);
+        return false;
+      }
+
+      videoSlot.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-black text-red-300 text-xs font-bold gap-2">
+        <span>Original local video file not linked yet.</span>
+        <span class="text-slate-400 font-normal">Open Admin → Daily Alert Message → "Pick from disk" (or place the file inside your linked timeFlow folder) and Save.</span>
+      </div>`;
+      return false;
+    }
+
+    /** Admin: pick video from disk and keep a handle to the ORIGINAL path (zero copy into browser). */
     async function adminPickAlertVideoFromDisk() {
       if (!window.showOpenFilePicker) {
-        // Fallback: click hidden file input
         const inp = document.getElementById('adm-alert-video-file');
         if (inp) inp.click();
-        showToast('This browser has limited file-handle support. Prefer putting the video in your linked timeFlow folder, or use YouTube.', 'error');
+        showToast('Use Chrome/Edge "Pick from disk" or place the video in your linked timeFlow folder.', 'error');
         return;
       }
       try {
@@ -2244,14 +2342,13 @@
         await persistAlertFileHandle(handle);
         const file = await handle.getFile();
         const nameEl = document.getElementById('adm-alert-local-name');
-        if (nameEl) nameEl.textContent = file.name + ' (original path linked)';
-        // Stash name on a data attribute for save
+        if (nameEl) nameEl.textContent = file.name + ' (original path linked — never stored in browser)';
         const holder = document.getElementById('adm-alert-video-file');
         if (holder) {
           holder.dataset.pickedName = file.name;
           holder.dataset.useHandle = '1';
         }
-        showToast('Linked to original file: ' + file.name + ' — not copied into browser.');
+        showToast('Linked to original file: ' + file.name + ' — kept at original disk location.');
       } catch (e) {
         if (e.name !== 'AbortError') showToast('Could not link file: ' + (e.message || e.name), 'error');
       }
@@ -2283,27 +2380,9 @@
         videoWrap.classList.remove('hidden');
         videoSlot.innerHTML = '';
 
-        // --- LOCAL FILE (persisted in IndexedDB so it survives refresh) ---
         if (a.video.isLocalFile) {
-          videoSlot.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold bg-black">Opening video from original folder…</div>';
-          try {
-            const resolved = await resolveAlertLocalFile(a.video);
-            if (resolved && (resolved instanceof Blob || resolved instanceof File)) {
-              playLocalAlertVideoElement(videoSlot, resolved);
-            } else if (typeof resolved === 'string' && resolved) {
-              playLocalAlertVideoElement(videoSlot, resolved);
-            } else {
-              videoSlot.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-black text-red-300 text-xs font-bold gap-2">
-                <span>Cannot access original video file.</span>
-                <span class="text-slate-400 font-normal">Admin: re-link the file (Pick from disk) or place it in your linked timeFlow folder as the same filename, then Save.</span>
-              </div>`;
-            }
-          } catch (e) {
-            console.warn(e);
-            videoSlot.innerHTML = '<div class="w-full h-full flex items-center justify-center text-red-300 text-xs font-bold p-4 bg-black">Failed to open local video from disk.</div>';
-          }
+          await renderLocalAlertVideoIntoSlot(videoSlot, a.video, false);
         } else {
-          // --- YOUTUBE / EMBED: always use official YouTube engine (no mirrors) ---
           const vidId = a.video.youtubeId || extractYouTubeId(a.video.url || a.video.embedSrc || '') || extractYouTubeId(a.video.embedSrc || '');
           let embedSrc = '';
           if (vidId) {
@@ -2318,7 +2397,6 @@
             });
             embedSrc = 'https://www.youtube.com/embed/' + encodeURIComponent(vidId) + '?' + params.toString();
           } else if (a.video.embedSrc && /youtube\.com|youtu\.be/i.test(a.video.embedSrc)) {
-            // Already an embed URL — force youtube host + autoplay
             try {
               const u = new URL(a.video.embedSrc, 'https://www.youtube.com');
               u.searchParams.set('autoplay', '1');
@@ -2328,7 +2406,6 @@
               embedSrc = a.video.embedSrc;
             }
           } else if (a.video.url && /\.(mp4|webm|ogg)(\?|$)/i.test(a.video.url)) {
-            // Direct video file URL
             const v = document.createElement('video');
             v.src = a.video.url;
             v.controls = true;
@@ -2344,10 +2421,10 @@
           if (embedSrc && !videoSlot.querySelector('video')) {
             videoSlot.innerHTML = '<iframe class="w-full h-full" src="' + embedSrc.replace(/"/g, '&quot;') + '" title="Warning video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
           } else if (!videoSlot.querySelector('video') && !videoSlot.querySelector('iframe')) {
-            videoSlot.innerHTML = '<div class="w-full h-full flex items-center justify-center text-red-300 text-xs font-bold p-4 bg-black">Could not load warning video. Check the YouTube link in Admin.</div>';
+            videoSlot.innerHTML = '<div class="w-full h-full flex items-center justify-center text-red-300 text-xs font-bold p-4 bg-black">Could not load warning video. Check the link in Admin.</div>';
           }
         }
-        // Lock dismiss for 20s (or until HTML5 video ends, whichever comes first after 20s min)
+
         alertLockSecondsLeft = 20;
         if (btn) {
           btn.disabled = true;
@@ -2377,7 +2454,7 @@
         if (btn) {
           btn.disabled = false;
           btn.classList.remove('opacity-50', 'cursor-not-allowed');
-          btn.textContent = 'I Acknowledge — Enter TimeFlow Anyway';
+          btn.textContent = 'I Face The Consequence — Enter TimeFlow';
         }
         if (countdownEl) countdownEl.classList.add('hidden');
       }
@@ -2395,7 +2472,7 @@
       if (btn) {
         btn.disabled = false;
         btn.classList.remove('opacity-50', 'cursor-not-allowed');
-        btn.textContent = 'I Acknowledge — Enter TimeFlow Anyway';
+        btn.textContent = 'I Face The Consequence — Enter TimeFlow';
       }
       if (countdownEl) {
         countdownEl.textContent = 'You may continue now';
@@ -2403,7 +2480,6 @@
     }
 
     function dismissDailyAlert() {
-      // If local video is present but not playing, use this click as gesture to start it
       if (alertActiveVideoEl && alertActiveVideoEl.paused && alertLockSecondsLeft > 0) {
         try {
           alertActiveVideoEl.muted = false;
@@ -2412,7 +2488,6 @@
         showToast('Video starting — watch the warning.', 'error');
         return;
       }
-      // Block if still locked
       if (alertLockSecondsLeft > 0 && !alertVideoEnded) {
         showToast('Watch the warning video — cannot skip yet.', 'error');
         return;
@@ -2423,12 +2498,11 @@
       revokeAlertSessionUrl();
       const modal = document.getElementById('daily-alert-modal');
       const videoSlot = document.getElementById('daily-alert-video-slot');
-      if (videoSlot) videoSlot.innerHTML = ''; // stop playback
+      if (videoSlot) videoSlot.innerHTML = '';
       if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       }
-      // Alert stays active — will show again on every refresh until Admin clears it
     }
 
     async function adminSaveDailyAlert() {
@@ -2444,17 +2518,19 @@
       const embedVal = (document.getElementById('adm-alert-video-embed')?.value || '').trim();
       const fileInp = document.getElementById('adm-alert-video-file');
       const localFile = fileInp && fileInp.files && fileInp.files[0];
+      const hasHandlePicked = fileInp && fileInp.dataset && fileInp.dataset.useHandle === '1';
 
       let video = null;
-      if (localFile || (document.getElementById('adm-alert-video-file') || {}).dataset?.useHandle === '1') {
+      if (localFile || hasHandlePicked) {
         const vidId = 'alert-vid-' + Date.now();
-        const fileName = localFile ? localFile.name : (document.getElementById('adm-alert-video-file').dataset.pickedName || 'video.mp4');
-        // If user used classic file input (no handle API), try to keep session blob only
-        if (localFile && !(await loadAlertFileHandle())) {
-          // No persistent handle — if timeFlow folder linked, copy is NOT done; we only keep session URL
+        const fileName = localFile
+          ? localFile.name
+          : (fileInp.dataset.pickedName || appState.alert?.video?.localFileName || 'video.mp4');
+        const existingHandle = await getStoredAlertFileHandle();
+        if (localFile && !existingHandle) {
           const blobUrl = URL.createObjectURL(localFile);
           localVideoBlobRegistry[vidId] = blobUrl;
-          showToast('Session-only local video (browser cannot keep file path). Use “Pick from disk” on Chrome/Edge or put file in linked timeFlow folder.', 'error');
+          showToast('Session-only local video. Use “Pick from disk” on Chrome/Edge or place file in linked timeFlow folder to persist across refreshes.', 'error');
         }
         video = {
           id: vidId,
@@ -2467,8 +2543,7 @@
           ? parseYouTubeLinkOrEmbed(urlVal, embedVal)
           : null;
         if (parsed) {
-          // Always store official YouTube engine for reliable alert playback
-          const ytEmbed = 'https://www.youtube.com/embed/' + encodeURIComponent(parsed.videoId) + '?autoplay=1&mute=1&controls=1&rel=0&playsinline=1';
+          const ytEmbed = 'https://www.youtube.com/embed/' + encodeURIComponent(parsed.videoId) + '?autoplay=1&mute=1&controls=1&rel=0&playsinline:1';
           video = {
             youtubeId: parsed.videoId,
             url: parsed.watchUrl || ('https://www.youtube.com/watch?v=' + parsed.videoId),
@@ -2477,9 +2552,10 @@
             isLocalFile: false
           };
         } else if (urlVal) {
-          // Direct video file URL or unknown link
           video = { url: urlVal, embedSrc: urlVal, preferredEngine: 'youtube', isLocalFile: false };
         }
+      } else if (appState.alert && appState.alert.video && appState.alert.video.isLocalFile) {
+        video = { ...appState.alert.video };
       }
 
       appState.alert = {
@@ -2491,8 +2567,8 @@
       saveAppState();
       renderAdminPanelModal();
       showToast(video
-        ? 'Alert + warning video activated! Locked for 20s on every refresh.'
-        : 'Daily alert activated (text only). Shows on EVERY refresh until cleared.');
+        ? 'Scary warning + original-location video activated! Shows on every refresh.'
+        : 'Scary warning activated (text only). Shows on EVERY refresh until cleared.');
     }
 
     async function adminClearDailyAlert() {
@@ -2504,9 +2580,15 @@
       const u = document.getElementById('adm-alert-video-url');
       const e = document.getElementById('adm-alert-video-embed');
       const f = document.getElementById('adm-alert-video-file');
+      const n = document.getElementById('adm-alert-local-name');
       if (u) u.value = '';
       if (e) e.value = '';
-      if (f) f.value = '';
+      if (f) {
+        f.value = '';
+        f.dataset.useHandle = '';
+        f.dataset.pickedName = '';
+      }
+      if (n) n.textContent = 'No local file linked';
       saveAppState();
       renderAdminPanelModal();
       showToast('Alert cleared — no popup will appear.');
@@ -5491,17 +5573,16 @@
         });
       }
 
-      // Restore previously linked timeFlow folder (if any)
-      restoreDirHandle().then(ok => {
-        if (ok) setCloudSyncStatus('folder', 'timeFlow Linked');
-        else setCloudSyncStatus('ok', 'Local Ready');
-      });
-
       renderAll();
       resetProfitForm();
       updateTimerUI();
-      // Show admin daily alert (if any) after UI is ready
-      setTimeout(() => checkAndShowDailyAlert(), 350);
+
+      // Restore previously linked timeFlow folder (if any) first, then show startup warning + video
+      restoreDirHandle(false).then(ok => {
+        if (ok) setCloudSyncStatus('folder', 'timeFlow Linked');
+        else setCloudSyncStatus('ok', 'Local Ready');
+        setTimeout(() => checkAndShowDailyAlert(), 150);
+      });
     });
   </script>
   <div style="margin: 24px auto; text-align: center; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
@@ -5529,47 +5610,49 @@
 
 
   <!-- ===================================================================== -->
-  <!-- DAILY / YESTERDAY ALERT MODAL (Admin-controlled message)               -->
+  <!-- SCARY STARTUP WARNING MODAL (Admin-controlled message + original video)-->
   <!-- ===================================================================== -->
-  <div id="daily-alert-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 backdrop-blur-sm p-4">
-    <div class="bg-gradient-to-b from-red-950 via-rose-950 to-black rounded-2xl max-w-lg w-full p-0 border-2 border-red-600 shadow-[0_0_60px_rgba(220,38,38,0.55)] relative overflow-hidden">
-      <!-- Danger stripes -->
-      <div class="h-2 w-full bg-[repeating-linear-gradient(90deg,#dc2626_0,#dc2626_12px,#fbbf24_12px,#fbbf24_24px)]"></div>
-      <div class="p-6 sm:p-7">
+  <div id="daily-alert-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/95 backdrop-blur-md p-3 sm:p-5">
+    <div class="horror-modal-card horror-scanlines bg-gradient-to-b from-[#2b0307] via-[#130103] to-[#040000] rounded-2xl max-w-xl w-full p-0 border-2 border-red-500 relative overflow-hidden">
+      <div class="h-3 w-full bg-[repeating-linear-gradient(90deg,#dc2626_0,#dc2626_14px,#000000_14px,#000000_28px)]"></div>
+      <div class="p-5 sm:p-7">
         <div class="flex items-start gap-3.5 mb-5">
-          <div class="w-14 h-14 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-[0_0_24px_rgba(220,38,38,0.7)] shrink-0 animate-pulse">
-            <i data-lucide="skull" class="w-7 h-7"></i>
+          <div class="w-16 h-16 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-[0_0_35px_rgba(239,68,68,0.95)] border-2 border-red-300/60 shrink-0 animate-pulse">
+            <i data-lucide="skull" class="w-9 h-9"></i>
           </div>
           <div class="min-w-0 pt-0.5">
-            <div class="flex flex-wrap items-center gap-2 mb-1">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] bg-red-600 text-white border border-red-400">CRITICAL WARNING</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40">DO NOT IGNORE</span>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="horror-flicker px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-[0.22em] bg-red-600 text-white border border-red-300/60 shadow">FATAL DISCIPLINE BREACH</span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/50">MANDATORY LOCK</span>
             </div>
-            <h3 class="text-xl font-black text-white tracking-tight">Yesterday's Failure Report</h3>
-            <p class="text-[11px] text-red-300/90 font-bold mt-0.5 uppercase tracking-wider">Admin locked this message — appears on every refresh</p>
+            <h3 class="text-xl sm:text-2xl font-black text-red-100 tracking-tight uppercase drop-shadow-[0_2px_10px_rgba(220,38,38,0.8)]">YOUR TIME IS BLEEDING AWAY</h3>
+            <p class="text-[11px] text-red-400 font-mono font-bold mt-0.5 uppercase tracking-wider">Locked on every refresh — zero escape until Admin clears this</p>
           </div>
         </div>
 
-        <div class="rounded-xl bg-black/50 border border-red-500/40 p-4 mb-4">
-          <div id="daily-alert-message" class="text-[15px] sm:text-base text-red-50 leading-relaxed whitespace-pre-wrap font-semibold min-h-[60px]"></div>
+        <div class="rounded-xl bg-black/80 border-2 border-red-600/60 p-4 mb-4 shadow-[inset_0_0_24px_rgba(220,38,38,0.3)]">
+          <div id="daily-alert-message" class="text-[15px] sm:text-base text-red-100 leading-relaxed whitespace-pre-wrap font-bold min-h-[60px]"></div>
         </div>
 
         <div id="daily-alert-video-wrap" class="hidden mb-4">
-          <div class="text-[10px] font-black uppercase tracking-widest text-red-400 mb-1.5 flex items-center gap-1.5">
-            <i data-lucide="play-circle" class="w-3.5 h-3.5"></i> Mandatory Warning Video
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span class="text-[10px] font-black uppercase tracking-widest text-red-400 flex items-center gap-1.5">
+              <i data-lucide="film" class="w-3.5 h-3.5"></i> Warning Broadcast (Live From Original Disk Location)
+            </span>
+            <span id="daily-alert-file-badge" class="text-[10px] font-mono text-red-300/90 truncate max-w-[220px]"></span>
           </div>
-          <div id="daily-alert-video-slot" class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-red-600/50 shadow-[0_0_30px_rgba(220,38,38,0.35)]"></div>
+          <div id="daily-alert-video-slot" class="aspect-video w-full rounded-xl overflow-hidden bg-black border-2 border-red-600/70 shadow-[0_0_40px_rgba(220,38,38,0.55)]"></div>
           <p id="daily-alert-countdown" class="mt-2 text-center text-[11px] font-black uppercase tracking-wider text-amber-400">Cannot skip for 20 seconds…</p>
         </div>
 
         <div class="flex flex-col gap-2.5">
-          <button type="button" id="daily-alert-dismiss-btn" onclick="dismissDailyAlert()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-700 via-rose-700 to-red-800 hover:from-red-600 hover:to-rose-600 text-white text-sm font-black uppercase tracking-wider shadow-[0_0_20px_rgba(220,38,38,0.45)] border border-red-400/30 transition">
-            I Acknowledge — Enter TimeFlow Anyway
+          <button type="button" id="daily-alert-dismiss-btn" onclick="dismissDailyAlert()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-800 via-red-600 to-rose-800 hover:from-red-600 hover:to-rose-600 text-white text-sm font-black uppercase tracking-wider shadow-[0_0_30px_rgba(220,38,38,0.65)] border border-red-300/40 transition cursor-pointer">
+            I Face The Consequence — Enter TimeFlow
           </button>
-          <p class="text-center text-[10px] text-red-400/80 font-bold uppercase tracking-widest">This warning will return on every page reload until Admin clears it</p>
+          <p class="text-center text-[10px] text-red-400/90 font-mono font-bold uppercase tracking-widest">Every page refresh replays this warning from original disk location</p>
         </div>
       </div>
-      <div class="h-2 w-full bg-[repeating-linear-gradient(90deg,#dc2626_0,#dc2626_12px,#fbbf24_12px,#fbbf24_24px)]"></div>
+      <div class="h-3 w-full bg-[repeating-linear-gradient(90deg,#dc2626_0,#dc2626_14px,#000000_14px,#000000_28px)]"></div>
     </div>
   </div>
 
