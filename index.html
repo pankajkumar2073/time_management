@@ -2041,15 +2041,12 @@
     }
 
     function dismissDailyAlert() {
+      // Only close for this page view. Alert stays active and will reappear on every refresh/reload.
       const modal = document.getElementById('daily-alert-modal');
       if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       }
-      // User dismissed — keep message but mark inactive so it doesn't reappear until admin sets a new one
-      ensureAlertShape();
-      appState.alert.active = false;
-      saveAppState();
     }
 
     function adminSaveDailyAlert() {
@@ -2067,7 +2064,7 @@
       };
       saveAppState();
       renderAdminPanelModal();
-      showToast('Daily alert activated! It will show next time the page is opened.');
+      showToast('Daily alert activated! It will appear on EVERY refresh until you Clear it.');
     }
 
     function adminClearDailyAlert() {
@@ -5099,22 +5096,37 @@
   <!-- ===================================================================== -->
   <!-- DAILY / YESTERDAY ALERT MODAL (Admin-controlled message)               -->
   <!-- ===================================================================== -->
-  <div id="daily-alert-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-950/85 backdrop-blur-md p-4">
-    <div class="bg-white dark:bg-obsidian-900 rounded-2xl max-w-md w-full p-6 border border-amber-500/40 shadow-2xl relative overflow-hidden">
-      <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-amber-500/10 blur-2xl pointer-events-none"></div>
-      <div class="flex items-start gap-3 mb-4">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-600 text-white flex items-center justify-center shadow-lg shrink-0">
-          <i data-lucide="bell-ring" class="w-5 h-5"></i>
+  <div id="daily-alert-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+    <div class="bg-gradient-to-b from-red-950 via-rose-950 to-black rounded-2xl max-w-lg w-full p-0 border-2 border-red-600 shadow-[0_0_60px_rgba(220,38,38,0.55)] relative overflow-hidden">
+      <!-- Danger stripes -->
+      <div class="h-2 w-full bg-[repeating-linear-gradient(90deg,#dc2626_0,#dc2626_12px,#fbbf24_12px,#fbbf24_24px)]"></div>
+      <div class="p-6 sm:p-7">
+        <div class="flex items-start gap-3.5 mb-5">
+          <div class="w-14 h-14 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-[0_0_24px_rgba(220,38,38,0.7)] shrink-0 animate-pulse">
+            <i data-lucide="skull" class="w-7 h-7"></i>
+          </div>
+          <div class="min-w-0 pt-0.5">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] bg-red-600 text-white border border-red-400">CRITICAL WARNING</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40">DO NOT IGNORE</span>
+            </div>
+            <h3 class="text-xl font-black text-white tracking-tight">Yesterday's Failure Report</h3>
+            <p class="text-[11px] text-red-300/90 font-bold mt-0.5 uppercase tracking-wider">Admin locked this message — appears on every refresh</p>
+          </div>
         </div>
-        <div class="min-w-0">
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">Daily Alert</span>
-          <h3 class="text-lg font-black text-slate-900 dark:text-white mt-1">Message from Admin</h3>
+
+        <div class="rounded-xl bg-black/50 border border-red-500/40 p-4 mb-6">
+          <div id="daily-alert-message" class="text-[15px] sm:text-base text-red-50 leading-relaxed whitespace-pre-wrap font-semibold min-h-[72px]"></div>
+        </div>
+
+        <div class="flex flex-col gap-2.5">
+          <button type="button" onclick="dismissDailyAlert()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-700 via-rose-700 to-red-800 hover:from-red-600 hover:to-rose-600 text-white text-sm font-black uppercase tracking-wider shadow-[0_0_20px_rgba(220,38,38,0.45)] border border-red-400/30 transition">
+            I Acknowledge — Enter TimeFlow Anyway
+          </button>
+          <p class="text-center text-[10px] text-red-400/80 font-bold uppercase tracking-widest">This warning will return on every page reload until Admin clears it</p>
         </div>
       </div>
-      <div id="daily-alert-message" class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap mb-6 min-h-[60px]"></div>
-      <button type="button" onclick="dismissDailyAlert()" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-extrabold shadow-sm transition">
-        Got it — Continue to TimeFlow
-      </button>
+      <div class="h-2 w-full bg-[repeating-linear-gradient(90deg,#dc2626_0,#dc2626_12px,#fbbf24_12px,#fbbf24_24px)]"></div>
     </div>
   </div>
 
@@ -5271,8 +5283,8 @@
               Yesterday / Custom Daily Alert
             </h4>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Write any custom message (e.g. "Yesterday you wasted 200 minutes on distractions"). 
-              It will appear as a popup the next time the main TimeFlow page is opened. 
+              Write any custom message (e.g. "Yesterday you wasted 200 minutes on distractions").
+              While active, this DANGER warning appears on EVERY page refresh/reload until you Clear it.
               Leave empty + Clear to show nothing.
             </p>
           </div>
