@@ -2033,11 +2033,187 @@
       if (!('video' in appState.alert)) appState.alert.video = null;
     }
 
+    const MEDIA_IDB_NAME = 'timeflow_media_v1';
+    const MEDIA_IDB_STORE = 'blobs';
+    const ALERT_VIDEO_IDB_KEY = 'daily_alert_local_video';
+
+    function openMediaIDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(MEDIA_IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(MEDIA_IDB_STORE)) {
+            db.createObjectStore(MEDIA_IDB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveAlertVideoToIDB(fileOrBlob, meta = {}) {
+      // Read full bytes so playback works reliably after reload (Blob refs can be flaky)
+      const buffer = await fileOrBlob.arrayBuffer();
+      const type = fileOrBlob.type || meta.type || 'video/mp4';
+      const name = meta.name || fileOrBlob.name || 'alert-video.mp4';
+      const db = await openMediaIDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(MEDIA_IDB_STORE, 'readwrite');
+        tx.objectStore(MEDIA_IDB_STORE).put({
+          buffer: buffer,
+          blob: new Blob([buffer], { type: type }),
+          name: name,
+          type: type,
+          size: buffer.byteLength,
+          savedAt: Date.now()
+        }, ALERT_VIDEO_IDB_KEY);
+        tx.oncomplete = () => { db.close(); resolve(true); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+      });
+    }
+
+    async function loadAlertVideoFromIDB() {
+      try {
+        const db = await openMediaIDB();
+        const row = await new Promise((resolve, reject) => {
+          const tx = db.transaction(MEDIA_IDB_STORE, 'readonly');
+          const req = tx.objectStore(MEDIA_IDB_STORE).get(ALERT_VIDEO_IDB_KEY);
+          req.onsuccess = () => { db.close(); resolve(req.result || null); };
+          req.onerror = () => { db.close(); reject(req.error); };
+        });
+        if (!row) return null;
+        // Prefer reconstructing Blob from ArrayBuffer (most reliable)
+        if (row.buffer) {
+          const type = row.type || 'video/mp4';
+          return { blob: new Blob([row.buffer], { type: type }), name: row.name, type: type };
+        }
+        if (row.blob) return row;
+        return null;
+      } catch (e) {
+        console.warn('loadAlertVideoFromIDB failed', e);
+        return null;
+      }
+    }
+
+    async function deleteAlertVideoFromIDB() {
+      try {
+        const db = await openMediaIDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(MEDIA_IDB_STORE, 'readwrite');
+          tx.objectStore(MEDIA_IDB_STORE).delete(ALERT_VIDEO_IDB_KEY);
+          tx.oncomplete = () => { db.close(); resolve(); };
+          tx.onerror = () => { db.close(); reject(tx.error); };
+        });
+      } catch (e) {
+        console.warn('deleteAlertVideoFromIDB failed', e);
+      }
+    }
+
+    let alertVideoForceTimer = null;
+    let alertActiveVideoEl = null;
+
+    function playLocalAlertVideoElement(videoSlot, blobOrUrl, isBlobUrl = false) {
+      if (alertVideoForceTimer) { clearInterval(alertVideoForceTimer); alertVideoForceTimer = null; }
+      const src = isBlobUrl ? blobOrUrl : URL.createObjectURL(blobOrUrl);
+
+      videoSlot.innerHTML = '';
+      videoSlot.style.position = 'relative';
+
+      const v = document.createElement('video');
+      v.src = src;
+      v.controls = true;
+      v.autoplay = true;
+      v.muted = true; // muted first so browser allows autoplay
+      v.loop = false;
+      v.playsInline = true;
+      v.setAttribute('playsinline', '');
+      v.setAttribute('webkit-playsinline', '');
+      v.setAttribute('x-webkit-airplay', 'allow');
+      v.preload = 'auto';
+      v.className = 'w-full h-full object-contain bg-black';
+      v.style.width = '100%';
+      v.style.height = '100%';
+
+      // Overlay: forces user gesture if autoplay is blocked — video MUST start
+      const overlay = document.createElement('div');
+      overlay.id = 'alert-video-tap-overlay';
+      overlay.style.cssText = 'position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(0,0,0,0.72);cursor:pointer;';
+      overlay.innerHTML = '<div style="width:64px;height:64px;border-radius:9999px;background:#dc2626;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(220,38,38,0.7);font-size:28px;">▶</div>'
+        + '<div style="color:#fff;font-weight:900;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;">Tap to play warning video</div>'
+        + '<div style="color:#fca5a5;font-size:11px;font-weight:700;">Required — cannot continue until this plays</div>';
+
+      const hideOverlayAndUnmute = () => {
+        overlay.style.display = 'none';
+        try { v.muted = false; v.volume = 1; } catch (_) {}
+      };
+
+      const forcePlay = () => {
+        if (!v) return;
+        // Always try muted play first (policy-safe), then unmute
+        v.muted = true;
+        const p = v.play();
+        if (p && typeof p.then === 'function') {
+          p.then(() => {
+            hideOverlayAndUnmute();
+          }).catch(() => {
+            // Still blocked — keep overlay visible for tap
+            overlay.style.display = 'flex';
+          });
+        } else {
+          // Older engines
+          try { v.play(); hideOverlayAndUnmute(); } catch (_) { overlay.style.display = 'flex'; }
+        }
+      };
+
+      overlay.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        forcePlay();
+      });
+
+      v.addEventListener('ended', () => { alertVideoEnded = true; unlockAlertDismissIfReady(); });
+      v.addEventListener('playing', () => { hideOverlayAndUnmute(); });
+      v.addEventListener('error', () => {
+        overlay.style.display = 'flex';
+        overlay.innerHTML = '<div style="color:#fca5a5;font-weight:800;font-size:12px;text-align:center;padding:12px;">Video failed to decode. Use MP4 (H.264) or re-select the file in Admin.</div>';
+      });
+
+      videoSlot.appendChild(v);
+      videoSlot.appendChild(overlay);
+      alertActiveVideoEl = v;
+
+      // Aggressive play attempts
+      const kick = () => forcePlay();
+      v.addEventListener('loadeddata', kick, { once: true });
+      v.addEventListener('canplay', kick, { once: true });
+      if (v.readyState >= 2) kick();
+      // Retry every 800ms until actually playing (max ~12s)
+      let tries = 0;
+      alertVideoForceTimer = setInterval(() => {
+        tries += 1;
+        if (!v.paused && !v.ended && v.currentTime > 0.05) {
+          hideOverlayAndUnmute();
+          clearInterval(alertVideoForceTimer);
+          alertVideoForceTimer = null;
+          return;
+        }
+        if (tries > 15) {
+          clearInterval(alertVideoForceTimer);
+          alertVideoForceTimer = null;
+          overlay.style.display = 'flex';
+          return;
+        }
+        forcePlay();
+      }, 800);
+
+      return v;
+    }
+
     let alertLockTimer = null;
     let alertLockSecondsLeft = 0;
     let alertVideoEnded = false;
 
-    function checkAndShowDailyAlert() {
+    async function checkAndShowDailyAlert() {
       ensureAlertShape();
       const a = appState.alert;
       if (!a.active || !a.message || !String(a.message).trim()) return;
@@ -2059,26 +2235,28 @@
         videoWrap.classList.remove('hidden');
         videoSlot.innerHTML = '';
 
-        // --- LOCAL FILE ---
+        // --- LOCAL FILE (persisted in IndexedDB so it survives refresh) ---
         if (a.video.isLocalFile) {
-          const src = localVideoBlobRegistry[a.video.id] || a.video.localBlobUrl || '';
-          if (src) {
-            const v = document.createElement('video');
-            v.src = src;
-            v.controls = true;
-            v.autoplay = true;
-            v.muted = true; // needed for autoplay policy; user can unmute
-            v.playsInline = true;
-            v.setAttribute('playsinline', '');
-            v.className = 'w-full h-full object-contain bg-black';
-            v.addEventListener('ended', () => { alertVideoEnded = true; unlockAlertDismissIfReady(); });
-            videoSlot.appendChild(v);
-            const tryPlay = () => v.play().then(() => { try { v.muted = false; } catch(_){} }).catch(() => {});
-            tryPlay();
+          videoSlot.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold bg-black">Loading local warning video…</div>';
+          let blobUrl = '';
+          // Prefer IndexedDB (survives refresh) — most reliable source
+          try {
+            const stored = await loadAlertVideoFromIDB();
+            if (stored && stored.blob) {
+              blobUrl = URL.createObjectURL(stored.blob);
+              if (a.video.id) localVideoBlobRegistry[a.video.id] = blobUrl;
+            }
+          } catch (e) { console.warn('IDB local alert video load failed', e); }
+          // Fallback: same-session memory / stale blob url
+          if (!blobUrl) {
+            blobUrl = (a.video.id && localVideoBlobRegistry[a.video.id]) || a.video.localBlobUrl || '';
+          }
+          if (blobUrl) {
+            playLocalAlertVideoElement(videoSlot, blobUrl, true);
           } else {
             videoSlot.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-black text-red-300 text-xs font-bold gap-2">
-              <span>Local video file is not available after page reload.</span>
-              <span class="text-slate-400 font-normal">Re-select the file in Admin → Daily Alert, or use a YouTube link instead.</span>
+              <span>Local video not found in browser storage.</span>
+              <span class="text-slate-400 font-normal">Open Admin → Daily Alert → re-select the video file (MP4) and Save again.</span>
             </div>`;
           }
         } else {
@@ -2182,6 +2360,15 @@
     }
 
     function dismissDailyAlert() {
+      // If local video is present but not playing, use this click as gesture to start it
+      if (alertActiveVideoEl && alertActiveVideoEl.paused && alertLockSecondsLeft > 0) {
+        try {
+          alertActiveVideoEl.muted = false;
+          alertActiveVideoEl.play().catch(() => {});
+        } catch (_) {}
+        showToast('Video starting — watch the warning.', 'error');
+        return;
+      }
       // Block if still locked
       if (alertLockSecondsLeft > 0 && !alertVideoEnded) {
         showToast('Watch the warning video — cannot skip yet.', 'error');
@@ -2198,7 +2385,7 @@
       // Alert stays active — will show again on every refresh until Admin clears it
     }
 
-    function adminSaveDailyAlert() {
+    async function adminSaveDailyAlert() {
       ensureAlertShape();
       const ta = document.getElementById('adm-alert-message');
       const msg = (ta ? ta.value : '').trim();
@@ -2214,13 +2401,21 @@
 
       let video = null;
       if (localFile) {
-        const blobUrl = URL.createObjectURL(localFile);
         const vidId = 'alert-vid-' + Date.now();
+        try {
+          await saveAlertVideoToIDB(localFile, { name: localFile.name });
+        } catch (e) {
+          console.error('Failed to store alert video in IndexedDB', e);
+          showToast('Could not store local video in browser. Try a smaller MP4 or use YouTube.', 'error');
+          return;
+        }
+        const blobUrl = URL.createObjectURL(localFile);
         localVideoBlobRegistry[vidId] = blobUrl;
         video = {
           id: vidId,
           isLocalFile: true,
           localFileName: localFile.name,
+          // do not rely on localBlobUrl after reload — IndexedDB is source of truth
           localBlobUrl: blobUrl
         };
       } else if (urlVal || embedVal) {
@@ -2256,9 +2451,10 @@
         : 'Daily alert activated (text only). Shows on EVERY refresh until cleared.');
     }
 
-    function adminClearDailyAlert() {
+    async function adminClearDailyAlert() {
       ensureAlertShape();
       appState.alert = { message: '', active: false, updatedAt: null, video: null };
+      await deleteAlertVideoFromIDB();
       const ta = document.getElementById('adm-alert-message');
       if (ta) ta.value = '';
       const u = document.getElementById('adm-alert-video-url');
@@ -5504,7 +5700,7 @@
               </h5>
               <span class="text-[10px] font-bold text-slate-400">Leave empty = text only, no video</span>
             </div>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">If set, the video auto-plays and user cannot dismiss for 20 seconds. Prefer YouTube links (most reliable). Local files work only until full browser restart.</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">If set, the video auto-plays and user cannot dismiss for 20 seconds. YouTube links recommended. Local MP4 is stored in this browser (IndexedDB) and survives refresh.</p>
             <div>
               <label class="block text-[11px] font-bold mb-1">YouTube Link</label>
               <input type="url" id="adm-alert-video-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-500" />
