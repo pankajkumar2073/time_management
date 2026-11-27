@@ -2,7 +2,7 @@
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>TimeFlow Command Center — 24H Study, Video Vault & Profit Matrix</title>
   <link rel="icon" type="image/png" href="https://www.shutterstock.com/image-vector/vector-illustration-work-time-management-600nw-1650125056.jpg" />
@@ -80,11 +80,37 @@
     /* Responsive & Touch Ergonomics Enhancements Across All Viewports */
     html, body {
       max-width: 100vw;
-      overflow-x: clip;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       -webkit-tap-highlight-color: transparent;
+      touch-action: pan-x pan-y;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
-    button, [role="button"], select, input[type="date"], input[type="time"] {
-      touch-action: manipulation;
+    input:not(#date-picker), select, textarea {
+      font-size: 16px !important;
+    }
+    #date-picker {
+      font-size: 13px !important;
+      width: auto !important;
+      min-width: 118px;
+      max-width: none;
+      letter-spacing: -0.01em;
+    }
+    #date-picker::-webkit-calendar-picker-indicator {
+      margin-left: 2px;
+      padding: 0;
+      cursor: pointer;
+    }
+    @media (min-width: 768px) {
+      input:not(#date-picker), select, textarea {
+        font-size: inherit !important;
+      }
+      #date-picker {
+        font-size: 0.875rem !important;
+        min-width: 132px;
+      }
     }
     @media (max-width: 640px) {
       #admin-panel-modal > div {
@@ -107,9 +133,37 @@
     }
     @media (max-width: 380px) {
       #date-picker {
-        width: 96px !important;
-        font-size: 0.7rem !important;
+        font-size: 12px !important;
+        min-width: 108px !important;
       }
+    }
+
+
+    /* Next-Level Elevated Glass Cards & Micro-Interactions */
+    .tf-card {
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 250, 252, 0.88) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.08), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+    .dark .tf-card {
+      background: linear-gradient(165deg, rgba(19, 25, 43, 0.86) 0%, rgba(13, 17, 29, 0.92) 100%);
+      border: 1px solid rgba(51, 65, 85, 0.65);
+      box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    }
+    .tf-card-hover:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.55);
+      box-shadow: 0 20px 42px -15px rgba(99, 102, 241, 0.22), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    }
+    .nav-tab {
+      position: relative;
+      border-radius: 0.75rem 0.75rem 0 0;
+    }
+    .nav-tab.active {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0.02) 100%);
     }
 
     @keyframes horrorBorderPulse {
@@ -196,13 +250,13 @@
         </div>
 
         <!-- Date Navigation Capsule -->
-        <div class="flex items-center gap-1 bg-slate-100/90 dark:bg-obsidian-850/90 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-inner max-w-full">
+        <div class="flex items-center justify-between sm:justify-start gap-0.5 sm:gap-1 bg-slate-100/90 dark:bg-obsidian-850/90 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-inner w-full sm:w-auto">
           <button id="prev-day-btn" type="button" title="Previous Day" class="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition shrink-0">
             <i data-lucide="chevron-left" class="w-4 h-4"></i>
           </button>
-          <div class="relative flex items-center px-1.5 sm:px-2 min-w-0">
-            <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-500 mr-1.5 pointer-events-none shrink-0"></i>
-            <input type="date" id="date-picker" class="bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer tabular-nums w-[112px] sm:w-auto" />
+          <div class="relative flex items-center justify-center px-1 sm:px-2 flex-1 sm:flex-initial">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-500 mr-1 pointer-events-none shrink-0 hidden xs:inline-block sm:inline-block"></i>
+            <input type="date" id="date-picker" class="bg-transparent text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer tabular-nums w-auto" />
           </div>
           <button id="next-day-btn" type="button" title="Next Day" class="p-1.5 sm:p-2 rounded-xl hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition shrink-0">
             <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -218,7 +272,7 @@
             <span id="cloud-sync-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span id="cloud-sync-label">Local Ready</span>
           </span>
-          <button id="header-timer-pill" type="button" onclick="switchToTab('calculator')" class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-mono font-bold hover:bg-emerald-500/25 transition">
+          <button id="header-timer-pill" type="button" onclick="switchToTab('timer')" class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-mono font-bold hover:bg-emerald-500/25 transition">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
             <span id="header-timer-text">19:00</span>
           </button>
@@ -255,18 +309,26 @@
         </div>
       </div>
 
-      <!-- 5-Tab Navigation Bar -->
+      <!-- 7-Tab Navigation Bar -->
       <nav class="flex items-center gap-1 overflow-x-auto pb-0 -mb-px" aria-label="Tabs">
         <button data-tab="dashboard" type="button" class="nav-tab active group inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 whitespace-nowrap transition">
           <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
           <span>Daily Dashboard</span>
         </button>
+        <button data-tab="matrix" type="button" class="nav-tab group inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap transition">
+          <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+          <span>Subject & Reward Matrix</span>
+        </button>
         <button data-tab="calculator" type="button" class="nav-tab group inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap transition">
-          <i data-lucide="timer" class="w-4 h-4"></i>
+          <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
           <span>Subject Study Division</span>
         </button>
+        <button data-tab="timer" type="button" class="nav-tab group inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap transition">
+          <i data-lucide="timer" class="w-4 h-4 text-emerald-400"></i>
+          <span>Focus Timer</span>
+        </button>
         <button data-tab="analytics" type="button" class="nav-tab group inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap transition">
-          <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+          <i data-lucide="bar-chart-3" class="w-4 h-4 text-violet-400"></i>
           <span>Weekly & Monthly Progress</span>
         </button>
         <button data-tab="videos" type="button" class="nav-tab group inline-flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap transition">
@@ -288,371 +350,246 @@
   <!-- Main Content Area -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 min-w-0">
 
-    <!-- Top KPI Command Strip -->
-    <section class="grid grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mb-6">
-      <div class="lg:col-span-2 bg-white/85 dark:bg-obsidian-900/80 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
-        <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-          <span>Day Budget</span>
-          <i data-lucide="sun-moon" class="w-3.5 h-3.5 text-slate-400"></i>
-        </div>
-        <div class="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white tabular-nums">24.00<span class="text-xs font-sans font-semibold text-slate-400 ml-1">h</span></div>
-        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">1,440 mins fixed</div>
-      </div>
-
-      <div class="lg:col-span-2 bg-white/85 dark:bg-obsidian-900/80 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
-        <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-          <span>Sleep+Class</span>
-          <i data-lucide="bed-double" class="w-3.5 h-3.5 text-violet-500"></i>
-        </div>
-        <div id="kpi-sleep-classes" class="text-xl sm:text-2xl font-black font-mono text-violet-600 dark:text-violet-400 tabular-nums">10.50<span class="text-xs font-sans font-semibold text-slate-400 ml-1">h</span></div>
-        <div id="kpi-sleep-classes-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">7.5h + 3 classes</div>
-      </div>
-
-      <div class="lg:col-span-2 bg-white/85 dark:bg-obsidian-900/80 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
-        <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-          <span>Deductions</span>
-          <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-500"></i>
-        </div>
-        <div id="kpi-routines-unexpected" class="text-xl sm:text-2xl font-black font-mono text-amber-600 dark:text-amber-400 tabular-nums">2.50<span class="text-xs font-sans font-semibold text-slate-400 ml-1">h</span></div>
-        <div id="kpi-routines-unexpected-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">2.50h fixed + 0h unexp</div>
-      </div>
-
-      <div class="col-span-2 lg:col-span-2 bg-white/85 dark:bg-obsidian-900/80 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 border border-emerald-500/30 dark:border-emerald-500/25 shadow-sm relative overflow-hidden min-w-0">
-        <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
-          <span>Daily Progress</span>
-          <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
-        </div>
-        <div class="flex items-baseline justify-between">
-          <div id="kpi-daily-progress-pct" class="text-xl sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">0%</div>
-          <div id="kpi-daily-focused-mins" class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">0m focused</div>
-        </div>
-        <div class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-2">
-          <div id="kpi-daily-progress-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500" style="width: 0%"></div>
-        </div>
-      </div>
-
-      <div class="col-span-2 lg:col-span-4 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 rounded-2xl p-4 text-white shadow-glow-indigo relative overflow-hidden min-w-0">
-        <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
-        <div class="flex items-center justify-between text-[11px] font-bold tracking-wider text-indigo-100 mb-1">
-          <span>AVAILABLE STUDY TIME (S)</span>
-          <span id="kpi-available-hm" class="px-2 py-0.5 rounded-full bg-black/25 text-white font-mono text-[11px] border border-white/15">11h 00m</span>
-        </div>
-        <div class="flex items-baseline gap-2.5 flex-wrap">
-          <div id="kpi-available-hrs" class="text-2xl sm:text-3xl font-black font-mono tabular-nums">11.00<span class="text-sm font-sans font-semibold text-indigo-200 ml-1">hrs</span></div>
-          <div id="kpi-available-mins" class="text-xs font-mono text-indigo-200 tabular-nums">(= 660 mins)</div>
-        </div>
-        <div class="w-full h-2 bg-black/30 rounded-full overflow-hidden flex mt-2.5" title="24-Hour Breakdown">
-          <div id="bar-sleep" class="bg-purple-300 h-full transition-all duration-300" style="width: 31.25%"></div>
-          <div id="bar-classes" class="bg-sky-300 h-full transition-all duration-300" style="width: 12.5%"></div>
-          <div id="bar-routines" class="bg-amber-300 h-full transition-all duration-300" style="width: 10.4%"></div>
-          <div id="bar-unexpected" class="bg-rose-400 h-full transition-all duration-300" style="width: 0%"></div>
-          <div id="bar-available" class="bg-emerald-400 h-full transition-all duration-300" style="width: 45.85%"></div>
-        </div>
-        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] text-indigo-100/90 mt-1.5 font-medium">
-          <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-purple-300"></span>Sleep</span>
-          <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-sky-300"></span>Classes</span>
-          <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>Routines</span>
-          <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>Unexp</span>
-          <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Study (S)</span>
-        </div>
-      </div>
-    </section>
-
     <!-- ===================================================================== -->
-    <!-- TAB 1: DAILY DASHBOARD                                                -->
+    <!-- TAB 1: DAILY DASHBOARD (ONLY Sleep+Class, Deductions, Available Study -->
+    <!--        Time, Daily Progress, Core Inputs & Daily Timeline/Tasks)      -->
     <!-- ===================================================================== -->
-    <div id="tab-dashboard" class="tab-panel grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+    <div id="tab-dashboard" class="tab-panel space-y-6">
 
-      <div class="lg:col-span-5 flex flex-col gap-5 min-w-0">
-        <!-- Daily Progress Ring & Mastery Breakdown Card -->
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-          <div class="flex items-center justify-between gap-2 mb-3">
-            <div class="min-w-0">
-              <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Live Telemetry</span>
-              <h2 class="text-base font-extrabold text-slate-900 dark:text-white truncate">Daily Progress & Momentum</h2>
-            </div>
-            <span id="daily-momentum-badge" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 shrink-0">
-              Warming Up
+      <!-- 4-Card Daily Command KPI Strip (NO Day Budget) -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 sm:gap-4">
+        <div class="lg:col-span-3 tf-card tf-card-hover rounded-2xl p-4 sm:p-5 min-w-0">
+          <div class="flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
+            <span>Sleep + Class</span>
+            <span class="w-7 h-7 rounded-xl bg-violet-500/15 text-violet-500 flex items-center justify-center">
+              <i data-lucide="bed-double" class="w-3.5 h-3.5"></i>
             </span>
           </div>
-
-          <div class="flex items-center gap-4 sm:gap-5">
-            <div class="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 flex items-center justify-center">
-              <svg class="w-full h-full" viewBox="0 0 100 100">
-                <circle class="text-slate-200 dark:text-slate-800 stroke-current" stroke-width="9" cx="50" cy="50" r="40" fill="transparent"></circle>
-                <circle id="daily-ring-circle" class="text-emerald-500 progress-ring-circle stroke-current" stroke-width="9" stroke-linecap="round" cx="50" cy="50" r="40" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-              </svg>
-              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span id="daily-ring-pct" class="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white tabular-nums">0%</span>
-                <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400">Complete</span>
-              </div>
-            </div>
-
-            <div class="flex-1 space-y-2.5 min-w-0">
-              <div>
-                <div class="flex justify-between text-[11px] font-semibold mb-1">
-                  <span class="text-slate-600 dark:text-slate-300 truncate">Daily Timeline Blocks</span>
-                  <span id="prog-timeline-text" class="font-mono font-bold text-slate-800 dark:text-slate-200 ml-2">0/4</span>
-                </div>
-                <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div id="prog-timeline-bar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-              </div>
-
-              <div>
-                <div class="flex justify-between text-[11px] font-semibold mb-1">
-                  <span class="text-slate-600 dark:text-slate-300 truncate">Timer-Approved Blocks</span>
-                  <span id="prog-subjects-text" class="font-mono font-bold text-slate-800 dark:text-slate-200 ml-2">0/14</span>
-                </div>
-                <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div id="prog-subjects-bar" class="h-full bg-indigo-500 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-              </div>
-
-              <div>
-                <div class="flex justify-between text-[11px] font-semibold mb-1">
-                  <span class="text-slate-600 dark:text-slate-300 truncate">Focused Study Minutes</span>
-                  <span id="prog-focus-text" class="font-mono font-bold text-emerald-600 dark:text-emerald-400 ml-2">0 / 660m</span>
-                </div>
-                <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div id="prog-focus-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div id="kpi-sleep-classes" class="text-2xl sm:text-3xl font-black font-mono text-violet-600 dark:text-violet-400 tabular-nums">10.50<span class="text-xs font-sans font-semibold text-slate-400 ml-1">h</span></div>
+          <div id="kpi-sleep-classes-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">7.5h + 3 classes</div>
         </div>
 
-        <!-- Core Daily Deductions -->
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-          <div class="flex items-center justify-between mb-3.5">
-            <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-2">
-              <i data-lucide="sliders" class="w-4 h-4 text-indigo-500"></i>
-              <span>Core 24H Deductions</span>
-            </h2>
-            <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Auto-Saved
+        <div class="lg:col-span-3 tf-card tf-card-hover rounded-2xl p-4 sm:p-5 min-w-0">
+          <div class="flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
+            <span>Deductions</span>
+            <span class="w-7 h-7 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center">
+              <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
             </span>
           </div>
+          <div id="kpi-routines-unexpected" class="text-2xl sm:text-3xl font-black font-mono text-amber-600 dark:text-amber-400 tabular-nums">2.50<span class="text-xs font-sans font-semibold text-slate-400 ml-1">h</span></div>
+          <div id="kpi-routines-unexpected-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">2.50h fixed + 0h unexp</div>
+        </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div class="bg-slate-50/90 dark:bg-obsidian-850/90 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-700/70">
-              <label for="sleep-hours-input" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 flex items-center justify-between">
-                <span class="flex items-center gap-1.5"><i data-lucide="moon" class="w-3.5 h-3.5 text-violet-500"></i> Sleep</span>
-                <span id="sleep-hm-badge" class="text-[11px] font-mono text-violet-600 dark:text-violet-400">7h 30m</span>
-              </label>
-              <div class="flex items-center gap-2">
-                <input type="number" id="sleep-hours-input" step="0.25" min="0" max="24" value="7.5" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-sm font-mono font-extrabold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                <span class="text-xs font-bold text-slate-400">hrs</span>
-              </div>
-            </div>
-
-            <div class="bg-slate-50/90 dark:bg-obsidian-850/90 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-700/70">
-              <label for="classes-count-input" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 flex items-center justify-between">
-                <span class="flex items-center gap-1.5"><i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-sky-500"></i> Classes</span>
-                <span class="text-[11px] font-mono text-sky-600 dark:text-sky-400">1 = 1h</span>
-              </label>
-              <div class="flex items-center gap-1.5">
-                <button id="dec-classes-btn" type="button" class="w-9 h-9 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-black hover:border-indigo-500 transition shrink-0">−</button>
-                <input type="number" id="classes-count-input" step="1" min="0" max="16" value="3" class="w-full text-center px-2 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-sm font-mono font-extrabold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none min-w-0" />
-                <button id="inc-classes-btn" type="button" class="w-9 h-9 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-black hover:border-indigo-500 transition shrink-0">+</button>
-              </div>
-            </div>
+        <div class="lg:col-span-2 tf-card tf-card-hover rounded-2xl p-4 sm:p-5 border-emerald-500/30 relative overflow-hidden min-w-0">
+          <div class="flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5">
+            <span>Daily Progress</span>
+            <i data-lucide="trending-up" class="w-4 h-4"></i>
+          </div>
+          <div class="flex items-baseline justify-between gap-1">
+            <div id="kpi-daily-progress-pct" class="text-2xl sm:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">0%</div>
+            <div id="kpi-daily-focused-mins" class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">0m / 660m</div>
+          </div>
+          <div class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-2.5">
+            <div id="kpi-daily-progress-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500" style="width: 0%"></div>
           </div>
         </div>
 
-        <!-- Daily Timeline & Tasks -->
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex-1 flex flex-col">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
-            <div>
-              <h2 class="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                <i data-lucide="list-todo" class="w-4 h-4 text-indigo-500"></i>
-                <span>Daily Timeline & Tasks</span>
+        <div class="lg:col-span-4 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 rounded-2xl p-4 sm:p-5 text-white shadow-glow-indigo relative overflow-hidden min-w-0">
+          <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+          <div class="flex items-center justify-between text-[11px] font-bold tracking-wider text-indigo-100 mb-1">
+            <span>AVAILABLE STUDY TIME (S)</span>
+            <span id="kpi-available-hm" class="px-2.5 py-0.5 rounded-full bg-black/25 text-white font-mono text-[11px] border border-white/15">11h 00m</span>
+          </div>
+          <div class="flex items-baseline gap-2.5 flex-wrap">
+            <div id="kpi-available-hrs" class="text-2xl sm:text-3xl font-black font-mono tabular-nums">11.00<span class="text-sm font-sans font-semibold text-indigo-200 ml-1">hrs</span></div>
+            <div id="kpi-available-mins" class="text-xs font-mono text-indigo-200 tabular-nums">(= 660 mins)</div>
+          </div>
+          <div class="w-full h-2 bg-black/30 rounded-full overflow-hidden flex mt-3" title="Time Allocation Breakdown">
+            <div id="bar-sleep" class="bg-purple-300 h-full transition-all duration-300" style="width: 31.25%"></div>
+            <div id="bar-classes" class="bg-sky-300 h-full transition-all duration-300" style="width: 12.5%"></div>
+            <div id="bar-routines" class="bg-amber-300 h-full transition-all duration-300" style="width: 10.4%"></div>
+            <div id="bar-unexpected" class="bg-rose-400 h-full transition-all duration-300" style="width: 0%"></div>
+            <div id="bar-available" class="bg-emerald-400 h-full transition-all duration-300" style="width: 45.85%"></div>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] text-indigo-100/90 mt-2 font-medium">
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-purple-300"></span>Sleep</span>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-sky-300"></span>Classes</span>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>Routines</span>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>Unexp</span>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Study (S)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Daily Dashboard Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+        <div class="lg:col-span-5 flex flex-col gap-5 min-w-0">
+          <!-- Daily Progress Ring Card (Strictly computed from Available Study Time, Time Used to Study & Active Ratios) -->
+          <div class="tf-card rounded-2xl p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div class="min-w-0">
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Ratio-Weighted Telemetry</span>
+                <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">Daily Study Progress</h2>
+              </div>
+              <span id="daily-momentum-badge" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 shrink-0">
+                Warming Up
+              </span>
+            </div>
+
+            <div class="flex items-center gap-4 sm:gap-5">
+              <div class="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center">
+                <svg class="w-full h-full" viewBox="0 0 100 100">
+                  <circle class="text-slate-200 dark:text-slate-800 stroke-current" stroke-width="9" cx="50" cy="50" r="40" fill="transparent"></circle>
+                  <circle id="daily-ring-circle" class="text-emerald-500 progress-ring-circle stroke-current" stroke-width="9" stroke-linecap="round" cx="50" cy="50" r="40" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span id="daily-ring-pct" class="text-2xl sm:text-3xl font-black font-mono text-slate-900 dark:text-white tabular-nums">0%</span>
+                  <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400">Study Ratio</span>
+                </div>
+              </div>
+
+              <div class="flex-1 space-y-3 min-w-0">
+                <div>
+                  <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span class="text-slate-600 dark:text-slate-300 truncate">Time Used / Available (S)</span>
+                    <span id="prog-focus-text" class="font-mono font-bold text-emerald-600 dark:text-emerald-400 ml-2">0 / 660m</span>
+                  </div>
+                  <div class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div id="prog-focus-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span class="text-slate-600 dark:text-slate-300 truncate">Active Subject Ratio Coverage</span>
+                    <span id="prog-ratio-text" class="font-mono font-bold text-indigo-600 dark:text-indigo-400 ml-2">0% of 68.2%</span>
+                  </div>
+                  <div class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div id="prog-ratio-bar" class="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div class="pt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-200/70 dark:border-slate-800">
+                  <span>Active Subjects (&gt;0%): <strong id="prog-active-subs-count" class="text-slate-800 dark:text-slate-200 font-mono">0/8</strong></span>
+                  <button type="button" onclick="switchToTab('matrix')" class="font-bold text-indigo-500 hover:text-indigo-400 transition">Open Matrix →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Core Daily Deductions Inputs -->
+          <div class="tf-card rounded-2xl p-5 sm:p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <i data-lucide="sliders" class="w-4 h-4 text-indigo-500"></i>
+                <span>Sleep & Class Inputs</span>
               </h2>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Routines & unexpected time blocks deducted from 24h</p>
+              <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Auto-Saved
+              </span>
             </div>
-            <button id="open-add-task-btn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-sm transition">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div class="bg-slate-50/90 dark:bg-obsidian-850/90 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-700/70">
+                <label for="sleep-hours-input" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+                  <span class="flex items-center gap-1.5"><i data-lucide="moon" class="w-3.5 h-3.5 text-violet-500"></i> Sleep</span>
+                  <span id="sleep-hm-badge" class="text-[11px] font-mono text-violet-600 dark:text-violet-400">7h 30m</span>
+                </label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="sleep-hours-input" step="0.25" min="0" max="24" value="7.5" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-sm font-mono font-extrabold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                  <span class="text-xs font-bold text-slate-400">hrs</span>
+                </div>
+              </div>
+
+              <div class="bg-slate-50/90 dark:bg-obsidian-850/90 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-700/70">
+                <label for="classes-count-input" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+                  <span class="flex items-center gap-1.5"><i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-sky-500"></i> Classes</span>
+                  <span class="text-[11px] font-mono text-sky-600 dark:text-sky-400">1 = 1h</span>
+                </label>
+                <div class="flex items-center gap-1.5">
+                  <button id="dec-classes-btn" type="button" class="w-9 h-9 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-black hover:border-indigo-500 transition shrink-0">−</button>
+                  <input type="number" id="classes-count-input" step="1" min="0" max="16" value="3" class="w-full text-center px-2 py-2 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 text-sm font-mono font-extrabold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none min-w-0" />
+                  <button id="inc-classes-btn" type="button" class="w-9 h-9 rounded-xl bg-white dark:bg-obsidian-950 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-black hover:border-indigo-500 transition shrink-0">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Timeline & Tasks (Deductions Manager) -->
+        <div class="lg:col-span-7 tf-card rounded-2xl p-5 sm:p-6 flex flex-col min-w-0">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="list-todo" class="w-4 h-4 text-indigo-500"></i>
+                <span>Daily Timeline & Deduction Blocks</span>
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Fixed routines & unexpected blocks deducted to compute Available Study Time (S)</p>
+            </div>
+            <button id="open-add-task-btn" type="button" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-glow-indigo transition">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
               <span>Add Task</span>
             </button>
           </div>
 
-          <div class="flex items-center gap-1.5 mb-3 text-xs flex-wrap">
+          <div class="flex items-center gap-1.5 mb-3.5 text-xs flex-wrap">
             <button data-task-filter="all" type="button" class="task-filter-btn px-3 py-1.5 rounded-xl font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20">All Blocks</button>
             <button data-task-filter="fixed" type="button" class="task-filter-btn px-3 py-1.5 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Fixed</button>
             <button data-task-filter="unexpected" type="button" class="task-filter-btn px-3 py-1.5 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Unexpected</button>
             <button data-task-filter="sleep" type="button" class="task-filter-btn px-3 py-1.5 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Sleep Log</button>
           </div>
 
-          <div id="daily-tasks-list" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
-          </div>
-        </div>
-      </div>
-
-      <div class="lg:col-span-7 flex flex-col gap-5 min-w-0">
-        <!-- Timer-Gated Subject & Reward Allocation Matrix -->
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <h2 class="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                  <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
-                  <span>Subject & Reward Allocation Matrix</span>
-                </h2>
-                <span id="tasks-completed-pill" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/25">
-                  0 / 14 Done
-                </span>
-              </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Auto-split from <strong id="matrix-avail-hrs" class="text-indigo-600 dark:text-indigo-400 font-mono">11.00 hrs</strong> remaining (Rewards = <strong id="matrix-reward-pct" class="font-mono">25%</strong>). <span class="text-amber-500 font-semibold">Timer-Gated:</span> Subjects & rewards approve automatically only after completing all required focus timers.
-              </p>
-            </div>
-          </div>
-
-          <div id="subject-matrix-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          </div>
-        </div>
-
-        <!-- Embedded 5-Step Mastery Division -->
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <div class="min-w-0">
-              <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">5-Step Mastery Division</span>
-              <h3 id="quick-calc-subject-title" class="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">INT108 (Python Programming) — 125 mins</h3>
-            </div>
-            <button id="start-focus-from-dash-btn" type="button" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition shadow-glow-emerald shrink-0">
-              <i data-lucide="play" class="w-3.5 h-3.5"></i>
-              <span>Launch Focus Timer</span>
-            </button>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mt-3">
-            <div class="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/25 text-center">
-              <div class="text-[10px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300 leading-tight mb-1">New Concept</div>
-              <div id="qcalc-new" class="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">19</div>
-              <div class="text-[10px] font-medium text-emerald-700/70 dark:text-emerald-400/70 mt-0.5">mins (15%)</div>
-            </div>
-            <div class="rounded-xl p-3 bg-indigo-500/10 border border-indigo-500/25 text-center">
-              <div class="text-[10px] font-extrabold uppercase text-indigo-700 dark:text-indigo-300 leading-tight mb-1">Today Prob (≥1)</div>
-              <div id="qcalc-today" class="text-2xl font-black font-mono text-indigo-600 dark:text-indigo-400 tabular-nums">31</div>
-              <div class="text-[10px] font-medium text-indigo-700/70 dark:text-indigo-400/70 mt-0.5">mins (25%)</div>
-            </div>
-            <div class="rounded-xl p-3 bg-violet-500/10 border border-violet-500/25 text-center">
-              <div class="text-[10px] font-extrabold uppercase text-violet-700 dark:text-violet-300 leading-tight mb-1">P.Day Prob (≥1)</div>
-              <div id="qcalc-pday" class="text-2xl font-black font-mono text-violet-600 dark:text-violet-400 tabular-nums">38</div>
-              <div class="text-[10px] font-medium text-violet-700/70 dark:text-violet-400/70 mt-0.5">mins (30%)</div>
-            </div>
-            <div class="rounded-xl p-3 bg-sky-500/10 border border-sky-500/25 text-center">
-              <div class="text-[10px] font-extrabold uppercase text-sky-700 dark:text-sky-300 leading-tight mb-1">P.Week Prob (≥1)</div>
-              <div id="qcalc-pweek" class="text-2xl font-black font-mono text-sky-600 dark:text-sky-400 tabular-nums">25</div>
-              <div class="text-[10px] font-medium text-sky-700/70 dark:text-sky-400/70 mt-0.5">mins (20%)</div>
-            </div>
-            <div class="col-span-2 sm:col-span-1 rounded-xl p-3 bg-rose-500/10 border border-rose-500/25 text-center">
-              <div class="text-[10px] font-extrabold uppercase text-rose-700 dark:text-rose-300 leading-tight mb-1 flex items-center justify-center gap-1">
-                <i data-lucide="youtube" class="w-3 h-3"></i> Video Making
-              </div>
-              <div id="qcalc-video" class="text-2xl font-black font-mono text-rose-600 dark:text-rose-400 tabular-nums">12</div>
-              <div class="text-[10px] font-medium text-rose-700/70 dark:text-rose-400/70 mt-0.5">mins (10%)</div>
-            </div>
+          <div id="daily-tasks-list" class="space-y-2.5 max-h-[540px] overflow-y-auto pr-1">
           </div>
         </div>
       </div>
     </div>
 
     <!-- ===================================================================== -->
-    <!-- TAB 2: SUBJECT STUDY DIVISION & DRIFT-FREE REAL-CLOCK ALARM TIMER     -->
+    <!-- TAB 2: SUBJECT & REWARD ALLOCATION MATRIX (SEPARATE NAVIGATION TAB)   -->
     <!-- ===================================================================== -->
-    <div id="tab-calculator" class="tab-panel hidden space-y-6">
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
-        <!-- Mobile-Responsive Subject Study Division Card (Dynamic Read-Only Minutes) -->
-        <div class="lg:col-span-7 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
-          <div class="flex flex-col gap-3 mb-5">
-            <div>
-              <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-500">Algorithmic Breakdown</span>
-              <h2 class="text-lg font-black text-slate-900 dark:text-white">Subject Study Division Calculator</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">All subjects & sub-divided blocks are visible below. Tasks complete strictly after running each block's actual timer.</p>
-              <div id="calc-formula-subtitle" class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-300">
-                Formula: S (11.00h) × 19% = 125 mins
-              </div>
+    <div id="tab-matrix" class="tab-panel hidden space-y-6">
+      <div class="tf-card rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/25">Live Allocation Matrix</span>
+              <span id="tasks-completed-pill" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/25">
+                0 / 14 Done
+              </span>
             </div>
-            <!-- Fluid Mobile-Safe Selector + Read-Only Dynamic Allocated Time Badge -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
-              <select id="calc-subject-selector" class="w-full sm:flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none truncate">
-              </select>
-              <div title="Auto-calculated from 24h matrix for active subject & date (Read-only)" class="inline-flex items-center justify-center sm:justify-end gap-1.5 bg-indigo-500/10 dark:bg-obsidian-850 px-3.5 py-2.5 rounded-xl border border-indigo-500/25 shrink-0 select-none">
-                <i data-lucide="lock" class="w-3.5 h-3.5 text-indigo-500"></i>
-                <span id="calc-locked-mins-display" class="font-mono font-black text-sm text-indigo-600 dark:text-indigo-400 tabular-nums">—</span>
-                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">min</span>
-              </div>
-            </div>
+            <h2 class="text-xl font-black text-slate-900 dark:text-white mt-1.5 flex items-center gap-2">
+              <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
+              <span>Subject & Reward Allocation Matrix</span>
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Auto-split from <strong id="matrix-avail-hrs" class="text-indigo-600 dark:text-indigo-400 font-mono">11.00 hrs</strong> Available Study Time (Rewards = <strong id="matrix-reward-pct" class="font-mono">25%</strong>). Subjects set to <strong>0%</strong> in Subject Ratios are automatically hidden.
+            </p>
           </div>
-
-          <!-- All 5 Sub-Divided Steps Always Visible -->
-          <div id="full-study-division-list" class="space-y-3">
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="openSettingsModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-600 dark:text-indigo-300 border border-indigo-500/25 transition">
+              <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+              <span>Edit Ratios</span>
+            </button>
+            <button type="button" onclick="switchToTab('calculator')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-sm transition">
+              <span>Open Study Division →</span>
+            </button>
           </div>
         </div>
 
-        <!-- Drift-Free Circular Focus & Real-Clock Alarm Timer (Strictly NO +1m/-1m buttons) -->
-        <div id="timer-card-container" class="lg:col-span-5 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col justify-between transition-all min-w-0">
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-500">Real-Clock Alarm Timer</span>
-              <span id="timer-mode-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20">STUDY BLOCK</span>
-            </div>
-            <h3 id="timer-active-label" class="text-lg sm:text-xl font-black text-slate-900 dark:text-white truncate">INT108 — New Concept</h3>
-            <p id="timer-active-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Synced to real clock timestamp; rings continuously until dismissed.</p>
-          </div>
-
-          <div class="my-5 py-6 rounded-2xl bg-slate-950 text-white flex flex-col items-center justify-center relative overflow-hidden border border-slate-800 shadow-inner">
-            <div class="relative w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center">
-              <svg class="w-full h-full" viewBox="0 0 120 120">
-                <circle class="text-slate-800 stroke-current" stroke-width="7" cx="60" cy="60" r="52" fill="transparent"></circle>
-                <circle id="timer-svg-ring" class="text-indigo-500 progress-ring-circle stroke-current" stroke-width="7" stroke-linecap="round" cx="60" cy="60" r="52" fill="transparent" stroke-dasharray="326.72" stroke-dashoffset="0"></circle>
-              </svg>
-              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div id="timer-display" class="text-4xl sm:text-5xl font-black font-mono tracking-tight tabular-nums text-white">19:00</div>
-                <div id="timer-status-text" class="text-[11px] font-semibold text-indigo-300 mt-1 px-2">Ready to start</div>
-              </div>
-            </div>
-
-            <div class="flex flex-wrap items-center justify-center gap-2 mt-3 px-3">
-              <span id="timer-real-clock-badge" class="hidden px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/35 text-[11px] font-mono font-bold text-indigo-200">
-                Rings at --:--:--
-              </span>
-              <button type="button" onclick="syncWithDeviceClock()" title="Open Android Clock or download .ics calendar alarm for this exact end time" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[11px] font-bold text-amber-300 flex items-center gap-1 transition">
-                <i data-lucide="alarm-clock" class="w-3 h-3"></i>
-                <span>Sync Real Clock</span>
-              </button>
-              <button type="button" onclick="completeTimerImmediately()" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-[11px] font-bold text-emerald-300 transition">
-                ✓ Complete Now
-              </button>
-            </div>
-          </div>
-
-          <div id="timer-presets" class="flex flex-wrap gap-1.5 mb-4">
-          </div>
-
-          <div class="grid grid-cols-3 gap-2.5">
-            <button id="timer-start-btn" type="button" class="col-span-2 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 transition shadow-glow-indigo cursor-pointer">
-              <i data-lucide="play" class="w-4 h-4"></i>
-              <span>Start Timer</span>
-            </button>
-            <button id="timer-reset-btn" type="button" class="py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-obsidian-850 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm flex items-center justify-center gap-1.5 transition cursor-pointer">
-              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-              <span>Reset</span>
-            </button>
-          </div>
+        <div id="subject-matrix-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         </div>
       </div>
 
-      <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+      <!-- 7-Day Master Allocation Sheet -->
+      <div class="tf-card rounded-2xl p-5 sm:p-6">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
             <h3 class="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <i data-lucide="table" class="w-4 h-4 text-emerald-500"></i>
-              <span>7-Day Master Allocation Sheet (Spreadsheet Matrix)</span>
+              <span>7-Day Master Allocation Sheet (Active &gt;0% Subjects)</span>
             </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Live replica of your Excel matrix across the 7-day window (click any row to switch active date)</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Live replica of your spreadsheet matrix across the 7-day window (click any row to switch active date)</p>
           </div>
         </div>
 
@@ -668,79 +605,334 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- TAB 3: WEEKLY & MONTHLY PROGRESS ANALYTICS                            -->
+    <!-- TAB 3: SUBJECT STUDY DIVISION (NO Day Budget, Sleep+Class, Deductions) -->
     <!-- ===================================================================== -->
-    <div id="tab-analytics" class="tab-panel hidden space-y-6">
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-          <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Weekly Subjects Approved</div>
-          <div id="wk-kpi-completed" class="text-2xl font-black font-mono text-indigo-600 dark:text-indigo-400 mt-1">0</div>
-          <div class="text-[11px] text-slate-400 mt-1">Across selected 7-day period</div>
-        </div>
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-          <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Weekly Available Study Time</div>
-          <div id="wk-kpi-study-hrs" class="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-1">0.00 hrs</div>
-          <div id="wk-kpi-study-mins" class="text-[11px] text-slate-400 mt-1">0 total minutes allocated</div>
-        </div>
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-          <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Unexpected / Routine Hrs</div>
-          <div id="wk-kpi-unexpected-hrs" class="text-2xl font-black font-mono text-amber-600 dark:text-amber-400 mt-1">0.00 hrs</div>
-          <div id="wk-kpi-unexpected-hrs-sub" class="text-[11px] text-slate-400 mt-1">Non-class & non-sleep deductions</div>
-        </div>
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-          <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Videos & Logs Recorded</div>
-          <div id="wk-kpi-logs-count" class="text-2xl font-black font-mono text-rose-600 dark:text-rose-400 mt-1">0</div>
-          <div class="text-[11px] text-slate-400 mt-1">Completed tasks & video proofs</div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-7 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <div>
-              <h3 class="text-base font-extrabold text-slate-900 dark:text-white">WEEKLY PERFORMANCE CHART</h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400">No. of Timer-Approved Subjects vs. Timeline (Days 1–7)</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button type="button" onclick="exportFullBackup()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-300 border border-emerald-500/25 transition">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                <span>Backup JSON</span>
-              </button>
-              <button type="button" onclick="triggerRestoreBackup()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500/15 hover:bg-sky-500/25 text-sky-600 dark:text-sky-300 border border-sky-500/25 transition">
-                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-                <span>Restore JSON</span>
-              </button>
+    <div id="tab-calculator" class="tab-panel hidden space-y-6">
+      <div class="tf-card rounded-2xl p-5 sm:p-7 min-w-0">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-slate-200/80 dark:border-slate-800">
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-500">Algorithmic 5-Step Breakdown</span>
+            <h2 class="text-xl font-black text-slate-900 dark:text-white mt-0.5">Subject Study Division Calculator</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Only subjects with &gt;0% ratio appear here. Click <strong>Run</strong> on any step to launch it in the dedicated Focus Timer tab.</p>
+            <div id="calc-formula-subtitle" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-xs font-mono font-bold text-indigo-600 dark:text-indigo-300">
+              Formula: S (11.00h) × 19% = 125 mins
             </div>
           </div>
-          <div class="h-56 sm:h-64 lg:h-72 w-full">
-            <canvas id="weeklyPerformanceChart"></canvas>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            <select id="calc-subject-selector" onchange="selectSubjectForCalc(this.value)" oninput="selectSubjectForCalc(this.value)" class="w-full sm:w-64 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none truncate">
+            </select>
+            <div title="Auto-calculated for active subject & date (Read-only)" class="inline-flex items-center justify-center gap-1.5 bg-indigo-500/10 dark:bg-obsidian-850 px-4 py-2.5 rounded-xl border border-indigo-500/25 shrink-0 select-none">
+              <i data-lucide="lock" class="w-3.5 h-3.5 text-indigo-500"></i>
+              <span id="calc-locked-mins-display" class="font-mono font-black text-sm text-indigo-600 dark:text-indigo-400 tabular-nums">—</span>
+              <span class="text-xs font-bold text-slate-500 dark:text-slate-400">min</span>
+            </div>
+            <button id="start-focus-from-dash-btn" type="button" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition shadow-glow-emerald shrink-0">
+              <i data-lucide="play" class="w-3.5 h-3.5"></i>
+              <span>Queue Next Step in Timer</span>
+            </button>
           </div>
         </div>
 
-        <div class="lg:col-span-5 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
-          <div class="mb-4">
-            <h3 class="text-base font-extrabold text-slate-900 dark:text-white">24H TIME DISTRIBUTION (WEEK)</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Sleep vs. Classes vs. Routines/Unexpected vs. Study</p>
+        <!-- Visual 5-Step Summary Strip -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
+          <div class="rounded-xl p-3.5 bg-emerald-500/10 border border-emerald-500/25 text-center">
+            <div class="text-[10px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300 leading-tight mb-1">New Concept</div>
+            <div id="qcalc-new" class="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">19</div>
+            <div class="text-[10px] font-medium text-emerald-700/70 dark:text-emerald-400/70 mt-0.5">mins (15%)</div>
           </div>
-          <div class="h-56 sm:h-64 lg:h-72 w-full">
-            <canvas id="weeklyTimeBreakdownChart"></canvas>
+          <div class="rounded-xl p-3.5 bg-indigo-500/10 border border-indigo-500/25 text-center">
+            <div class="text-[10px] font-extrabold uppercase text-indigo-700 dark:text-indigo-300 leading-tight mb-1">Today Prob (≥1)</div>
+            <div id="qcalc-today" class="text-2xl font-black font-mono text-indigo-600 dark:text-indigo-400 tabular-nums">31</div>
+            <div class="text-[10px] font-medium text-indigo-700/70 dark:text-indigo-400/70 mt-0.5">mins (25%)</div>
+          </div>
+          <div class="rounded-xl p-3.5 bg-violet-500/10 border border-violet-500/25 text-center">
+            <div class="text-[10px] font-extrabold uppercase text-violet-700 dark:text-violet-300 leading-tight mb-1">P.Day Prob (≥1)</div>
+            <div id="qcalc-pday" class="text-2xl font-black font-mono text-violet-600 dark:text-violet-400 tabular-nums">38</div>
+            <div class="text-[10px] font-medium text-violet-700/70 dark:text-violet-400/70 mt-0.5">mins (30%)</div>
+          </div>
+          <div class="rounded-xl p-3.5 bg-sky-500/10 border border-sky-500/25 text-center">
+            <div class="text-[10px] font-extrabold uppercase text-sky-700 dark:text-sky-300 leading-tight mb-1">P.Week Prob (≥1)</div>
+            <div id="qcalc-pweek" class="text-2xl font-black font-mono text-sky-600 dark:text-sky-400 tabular-nums">25</div>
+            <div class="text-[10px] font-medium text-sky-700/70 dark:text-sky-400/70 mt-0.5">mins (20%)</div>
+          </div>
+          <div class="col-span-2 sm:col-span-1 rounded-xl p-3.5 bg-rose-500/10 border border-rose-500/25 text-center">
+            <div class="text-[10px] font-extrabold uppercase text-rose-700 dark:text-rose-300 leading-tight mb-1 flex items-center justify-center gap-1">
+              <i data-lucide="youtube" class="w-3 h-3"></i> Video Making
+            </div>
+            <div id="qcalc-video" class="text-2xl font-black font-mono text-rose-600 dark:text-rose-400 tabular-nums">12</div>
+            <div class="text-[10px] font-medium text-rose-700/70 dark:text-rose-400/70 mt-0.5">mins (10%)</div>
           </div>
         </div>
-      </div>
 
-      <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-        <div class="mb-4">
-          <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Weekly Completed Tasks & Notes Log</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Permanent chronological completion archive across the week</p>
-        </div>
-        <div id="weekly-logs-feed" class="divide-y divide-slate-200 dark:divide-slate-800">
+        <!-- Detailed 5-Step Execution List -->
+        <div id="full-study-division-list" class="space-y-3">
         </div>
       </div>
     </div>
 
     <!-- ===================================================================== -->
-    <!-- TAB 4: VIDEO CREATION ARCHIVE (MULTI-ENGINE INLINE + THEATER PLAYER)  -->
+    <!-- TAB 4: DEDICATED FOCUS & REAL-CLOCK ALARM TIMER TAB                   -->
+    <!--        ("Complete Now" shown ONLY for Video Lecture Making & Reward)  -->
+    <!-- ===================================================================== -->
+    <div id="tab-timer" class="tab-panel hidden">
+      <div class="max-w-2xl mx-auto">
+        <div id="timer-card-container" class="tf-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span class="text-[11px] font-extrabold uppercase tracking-widest text-indigo-500 flex items-center gap-1.5">
+                <i data-lucide="radio" class="w-3.5 h-3.5 animate-pulse"></i>
+                Real-Clock Alarm Engine
+              </span>
+              <span id="timer-mode-badge" class="px-3 py-1 rounded-full text-[11px] font-extrabold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20">STUDY BLOCK</span>
+            </div>
+            <h2 id="timer-active-label" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white truncate">INT108 — New Concept</h2>
+            <p id="timer-active-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Drift-free hardware-synced countdown. Rings continuously when finished.</p>
+          </div>
+
+          <div class="my-6 py-8 rounded-2xl bg-slate-950 text-white flex flex-col items-center justify-center relative overflow-hidden border border-slate-800 shadow-inner">
+            <div class="relative w-52 h-52 sm:w-60 sm:h-60 flex items-center justify-center">
+              <svg class="w-full h-full" viewBox="0 0 120 120">
+                <circle class="text-slate-800 stroke-current" stroke-width="7" cx="60" cy="60" r="52" fill="transparent"></circle>
+                <circle id="timer-svg-ring" class="text-indigo-500 progress-ring-circle stroke-current" stroke-width="7" stroke-linecap="round" cx="60" cy="60" r="52" fill="transparent" stroke-dasharray="326.72" stroke-dashoffset="0"></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <div id="timer-display" class="text-5xl sm:text-6xl font-black font-mono tracking-tight tabular-nums text-white">19:00</div>
+                <div id="timer-status-text" class="text-xs font-semibold text-indigo-300 mt-1.5 px-3">Ready to start</div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-2.5 mt-4 px-4">
+              <span id="timer-real-clock-badge" class="hidden px-3 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/35 text-xs font-mono font-bold text-indigo-200">
+                Rings at --:--:--
+              </span>
+              <button type="button" onclick="syncWithDeviceClock()" title="Open Android Clock or download .ics calendar alarm for this exact end time" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-amber-300 flex items-center gap-1.5 transition">
+                <i data-lucide="alarm-clock" class="w-3.5 h-3.5"></i>
+                <span>Sync Real Clock</span>
+              </button>
+              <!-- ONLY visible for Video Lecture Making (stepKey === 'video') or Reward blocks (isReward === true) -->
+              <button id="timer-complete-now-btn" type="button" onclick="completeTimerImmediately()" class="hidden px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs font-extrabold text-emerald-300 transition cursor-pointer">
+                ✓ Complete Now
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Local Ringtone / Song Selector (Persisted in IndexedDB, Plays Even With Screen Off) -->
+          <div class="mb-4 p-3.5 rounded-2xl bg-slate-100/90 dark:bg-obsidian-850/90 border border-slate-200/80 dark:border-slate-700/80">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
+                  <i data-lucide="music" class="w-4 h-4"></i>
+                </span>
+                <div class="min-w-0">
+                  <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-200">Alarm Ringtone / Song</div>
+                  <div id="custom-ringtone-name" class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 truncate">Default Built-in Alarm Chime</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <label class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-extrabold cursor-pointer transition shadow-sm">
+                  Choose Song / Tune
+                  <input type="file" id="custom-ringtone-file-input" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac" class="hidden" />
+                </label>
+                <button type="button" id="test-custom-ringtone-btn" onclick="previewCustomRingtone()" class="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-300 border border-amber-500/25 text-[11px] font-bold transition">
+                  ▶ Test
+                </button>
+                <button type="button" id="clear-custom-ringtone-btn" onclick="clearCustomRingtone()" title="Reset to Default Chime" class="hidden px-2 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 text-[11px] font-bold transition">
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+              <span>Background Audio Guard keeps alarm armed when mobile screen turns off</span>
+              <span id="bg-audio-guard-badge" class="font-mono font-bold text-slate-400">Standby</span>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Quick Queue from Active Subject:</div>
+            <div id="timer-presets" class="flex flex-wrap gap-1.5">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <button id="timer-start-btn" type="button" class="col-span-2 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 transition shadow-glow-indigo cursor-pointer">
+              <i data-lucide="play" class="w-4 h-4"></i>
+              <span>Start Timer</span>
+            </button>
+            <button id="timer-reset-btn" type="button" class="py-4 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-obsidian-850 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-sm flex items-center justify-center gap-1.5 transition cursor-pointer">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 5: WEEKLY & MONTHLY PROGRESS ANALYTICS (WITH MONTHLY TAB ACCESS)  -->
+    <!-- ===================================================================== -->
+    <div id="tab-analytics" class="tab-panel hidden space-y-6">
+
+      <!-- Period Sub-Navigation Bar (Weekly vs Monthly) -->
+      <div class="tf-card rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 p-1 rounded-xl bg-slate-100 dark:bg-obsidian-850 border border-slate-200 dark:border-slate-700">
+          <button type="button" id="analytics-subtab-weekly" onclick="switchAnalyticsPeriod('weekly')" class="px-4 py-2 rounded-lg text-xs font-extrabold bg-indigo-600 text-white shadow-sm transition">
+            Weekly Progress (Last 7 Days)
+          </button>
+          <button type="button" id="analytics-subtab-monthly" onclick="switchAnalyticsPeriod('monthly')" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition">
+            Monthly Progress (Last 30 Days)
+          </button>
+        </div>
+
+        <div id="analytics-window-label" class="text-xs font-mono font-bold text-indigo-500 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-xl">
+          Last 7 Days Ending on Active Date
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="exportFullBackup()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-300 border border-emerald-500/25 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Backup JSON</span>
+          </button>
+          <button type="button" onclick="triggerRestoreBackup()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500/15 hover:bg-sky-500/25 text-sky-600 dark:text-sky-300 border border-sky-500/25 transition">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+            <span>Restore JSON</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- WEEKLY ANALYTICS VIEW -->
+      <div id="analytics-weekly-view" class="space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="tf-card rounded-2xl p-4 border-emerald-500/30">
+            <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400">7-Day Progress Measure</div>
+            <div id="wk-kpi-completed" class="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-1">0%</div>
+            <div id="wk-kpi-progress-sub" class="text-[11px] text-slate-400 mt-1">Study + Reward / Total Remained</div>
+          </div>
+          <div class="tf-card rounded-2xl p-4">
+            <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Utilized (Study + Reward)</div>
+            <div id="wk-kpi-utilized-hrs" class="text-2xl font-black font-mono text-indigo-600 dark:text-indigo-400 mt-1">0.00 hrs</div>
+            <div id="wk-kpi-utilized-sub" class="text-[11px] text-slate-400 mt-1">0.00h study + 0.00h reward</div>
+          </div>
+          <div class="tf-card rounded-2xl p-4">
+            <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Remained Study Time (S)</div>
+            <div id="wk-kpi-study-hrs" class="text-2xl font-black font-mono text-sky-600 dark:text-sky-400 mt-1">0.00 hrs</div>
+            <div id="wk-kpi-study-mins" class="text-[11px] text-slate-400 mt-1">Across last 7 days</div>
+          </div>
+          <div class="tf-card rounded-2xl p-4">
+            <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Videos & Logs Recorded</div>
+            <div id="wk-kpi-logs-count" class="text-2xl font-black font-mono text-rose-600 dark:text-rose-400 mt-1">0</div>
+            <div id="wk-kpi-unexpected-hrs" class="text-[11px] text-slate-400 mt-1">0.00h deductions in 7d</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 tf-card rounded-2xl p-4 sm:p-5 min-w-0">
+            <div class="mb-4">
+              <h3 class="text-base font-extrabold text-slate-900 dark:text-white">WEEKLY PERFORMANCE CHART</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">No. of Timer-Approved Subjects vs. Timeline (Days 1–7)</p>
+            </div>
+            <div class="h-56 sm:h-64 lg:h-72 w-full">
+              <canvas id="weeklyPerformanceChart"></canvas>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 tf-card rounded-2xl p-4 sm:p-5 min-w-0">
+            <div class="mb-4">
+              <h3 class="text-base font-extrabold text-slate-900 dark:text-white">TIME DISTRIBUTION (WEEK)</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Sleep vs. Classes vs. Routines/Unexpected vs. Study</p>
+            </div>
+            <div class="h-56 sm:h-64 lg:h-72 w-full">
+              <canvas id="weeklyTimeBreakdownChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="tf-card rounded-2xl p-4 sm:p-5">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Weekly Completed Tasks & Time Logs (Hours + Start to End)</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Chronological log showing exact duration in hours and start-to-end window</p>
+            </div>
+          </div>
+          <div id="weekly-logs-feed" class="divide-y divide-slate-200 dark:divide-slate-800">
+          </div>
+        </div>
+      </div>
+
+      <!-- MONTHLY ANALYTICS VIEW -->
+      <div id="analytics-monthly-view" class="hidden space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="tf-card rounded-2xl p-4 border-emerald-500/30">
+            <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400">30-Day Progress Measure</div>
+            <div id="mo-kpi-completed" class="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-1">0%</div>
+            <div id="mo-kpi-days-sub" class="text-[11px] text-slate-400 mt-1">Study + Reward / Total Remained</div>
+          </div>
+          <div class="tf-card rounded-2xl p-4">
+            <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Utilized (Study + Reward)</div>
+            <div id="mo-kpi-study-hrs" class="text-2xl font-black font-mono text-indigo-600 dark:text-indigo-400 mt-1">0.00 hrs</div>
+            <div id="mo-kpi-study-pct" class="text-[11px] text-slate-400 mt-1">0.00h study + 0.00h reward</div>
+          </div>
+          <div class="tf-card rounded-2xl p-4">
+            <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Remained Study Time (S)</div>
+            <div id="mo-kpi-deductions-hrs" class="text-2xl font-black font-mono text-sky-600 dark:text-sky-400 mt-1">0.00 hrs</div>
+            <div id="mo-kpi-sleep-sub" class="text-[11px] text-slate-400 mt-1">Across last 30 days</div>
+          </div>
+          <div class="tf-card rounded-2xl p-4">
+            <div class="text-xs font-bold text-slate-500 dark:text-slate-400">30-Day Logs & Videos</div>
+            <div id="mo-kpi-logs-count" class="text-2xl font-black font-mono text-rose-600 dark:text-rose-400 mt-1">0</div>
+            <div class="text-[11px] text-slate-400 mt-1">Recorded blocks & video proofs</div>
+          </div>
+        </div>
+
+        <div class="tf-card rounded-2xl p-4 sm:p-5 min-w-0">
+          <div class="mb-4">
+            <h3 id="monthly-chart-title" class="text-base font-extrabold text-slate-900 dark:text-white">MONTHLY STUDY & DEDUCTION CURVE</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Daily Available Study Hours vs. Focused Study Hours across the selected month</p>
+          </div>
+          <div class="h-60 sm:h-72 w-full">
+            <canvas id="monthlyProgressChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Monthly Day-by-Day Summary Table -->
+        <div class="tf-card rounded-2xl p-4 sm:p-5">
+          <div class="mb-3">
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Monthly Day-by-Day Breakdown</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Click any date row to jump directly to that day's dashboard</p>
+          </div>
+          <div class="overflow-x-auto max-h-80 rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-xs text-right border-collapse tabular-nums">
+              <thead class="sticky top-0 bg-slate-100 dark:bg-obsidian-850 text-slate-700 dark:text-slate-200 font-extrabold">
+                <tr>
+                  <th class="px-3 py-2.5 text-left">DATE</th>
+                  <th class="px-2.5 py-2.5">SLEEP + CLASS</th>
+                  <th class="px-2.5 py-2.5">DEDUCTIONS</th>
+                  <th class="px-2.5 py-2.5">REMAINED (S)</th>
+                  <th class="px-2.5 py-2.5">STUDY + REWARD</th>
+                  <th class="px-2.5 py-2.5">UTILIZATION</th>
+                  <th class="px-3 py-2.5 text-center">TASKS DONE</th>
+                </tr>
+              </thead>
+              <tbody id="monthly-days-tbody" class="divide-y divide-slate-200 dark:divide-slate-800">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Monthly Completed Tasks & Time Logs (Hours + Start to End) -->
+        <div class="tf-card rounded-2xl p-4 sm:p-5">
+          <div class="mb-4">
+            <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Monthly Completed Tasks & Time Logs (Hours + Start to End)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">All logged blocks across the selected month with duration in hours and start-to-end timestamps</p>
+          </div>
+          <div id="monthly-logs-feed" class="divide-y divide-slate-200 dark:divide-slate-800">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 6: VIDEO CREATION ARCHIVE (MULTI-ENGINE INLINE + THEATER PLAYER)  -->
     <!-- ===================================================================== -->
     <div id="tab-videos" class="tab-panel hidden space-y-6">
       <div id="file-protocol-notice" class="hidden bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3">
@@ -754,7 +946,7 @@
         </div>
       </div>
 
-      <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+      <div class="tf-card rounded-2xl p-4 sm:p-6">
         <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
           <div>
             <div class="flex items-center gap-2">
@@ -800,7 +992,7 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- TAB 5: PROFIT & PLAYING CAPITAL LEDGER (LATEST AT TOP)                -->
+    <!-- TAB 7: PROFIT & PLAYING CAPITAL LEDGER (LATEST AT TOP)                -->
     <!-- ===================================================================== -->
     <div id="tab-profit" class="tab-panel hidden space-y-6">
 
@@ -821,19 +1013,19 @@
           <div class="text-[11px] text-indigo-200 mt-1">Isolated Active Capital</div>
         </div>
 
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 border border-amber-500/30 shadow-sm">
+        <div class="tf-card rounded-2xl p-4 border-amber-500/30">
           <div class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Expected Today</div>
           <div id="pnl-kpi-expected" class="text-2xl font-black font-mono text-slate-900 dark:text-white mt-1 tabular-nums">21,275</div>
           <div id="pnl-kpi-expected-sub" class="text-[11px] text-slate-400 mt-1">&gt; 21,275 = Profit (+)</div>
         </div>
 
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+        <div class="tf-card rounded-2xl p-4">
           <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Withdrawn</div>
           <div id="pnl-kpi-withdrawn" class="text-2xl font-black font-mono text-sky-600 dark:text-sky-400 mt-1 tabular-nums">0</div>
           <div class="text-[11px] text-slate-400 mt-1">From playing wallet</div>
         </div>
 
-        <div class="bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+        <div class="tf-card rounded-2xl p-4">
           <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Best Day / Avg</div>
           <div class="flex items-baseline gap-1.5 mt-1">
             <span id="pnl-kpi-best" class="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">+18,064</span>
@@ -845,7 +1037,7 @@
 
       <!-- Dual Charts Row: DAILY DATA (PNL) + ACCUMULATED PROFIT -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-6 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
+        <div class="lg:col-span-6 tf-card rounded-2xl p-4 sm:p-5 min-w-0">
           <div class="flex items-center justify-between mb-3">
             <div>
               <h3 class="text-base font-black text-slate-900 dark:text-white tracking-tight">DAILY DATA (DAILY PNL)</h3>
@@ -858,7 +1050,7 @@
           </div>
         </div>
 
-        <div class="lg:col-span-6 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm min-w-0">
+        <div class="lg:col-span-6 tf-card rounded-2xl p-4 sm:p-5 min-w-0">
           <div class="flex items-center justify-between mb-3">
             <div>
               <h3 class="text-base font-black text-slate-900 dark:text-white tracking-tight">ACCUMULATED PROFIT (EQUITY CURVE)</h3>
@@ -875,7 +1067,7 @@
       <!-- Playing Capital & Withdrawal Engine Form + Latest-First Permanent Ledger Table -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <div class="lg:col-span-4 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm h-fit min-w-0">
+        <div class="lg:col-span-4 tf-card rounded-2xl p-4 sm:p-5 h-fit min-w-0">
           <div class="flex items-center justify-between mb-3">
             <div>
               <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-500">Playing Capital & Withdrawal Engine</span>
@@ -990,7 +1182,7 @@
           </div>
         </div>
 
-        <div class="lg:col-span-8 bg-white/90 dark:bg-obsidian-900/85 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col min-w-0">
+        <div class="lg:col-span-8 tf-card rounded-2xl p-4 sm:p-5 flex flex-col min-w-0">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
             <div>
               <div class="flex flex-wrap items-center gap-2">
@@ -1075,12 +1267,18 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Start Time</label>
-            <input type="time" id="task-start-input" required value="12:35" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+              <span>Start Time</span>
+              <span class="text-[10px] font-mono text-indigo-500">Live Now</span>
+            </label>
+            <input type="time" id="task-start-input" required class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">End Time</label>
-            <input type="time" id="task-end-input" required value="13:10" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+              <span>End Time</span>
+              <span class="text-[10px] font-mono text-emerald-500">+30m Suggested</span>
+            </label>
+            <input type="time" id="task-end-input" required class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-obsidian-850 border border-slate-300 dark:border-slate-700 text-sm font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
           </div>
         </div>
 
@@ -1559,6 +1757,8 @@
     let pendingVideoCompletion = null;
     let pnlEntryMode = 'playing';
 
+    const ACTIVE_TIMER_STORAGE_KEY = 'timeflow_active_timer_v1';
+
     let timerState = {
       totalSeconds: 19 * 60,
       remainingSeconds: 19 * 60,
@@ -1571,6 +1771,88 @@
       stepKey: 'newConcept',
       blockMins: 19
     };
+
+    function persistTimerRuntimeState() {
+      try {
+        localStorage.setItem(ACTIVE_TIMER_STORAGE_KEY, JSON.stringify({
+          totalSeconds: timerState.totalSeconds,
+          remainingSeconds: timerState.remainingSeconds,
+          targetEndTimeMs: timerState.targetEndTimeMs,
+          isRunning: timerState.isRunning,
+          label: timerState.label,
+          isReward: timerState.isReward,
+          subjectId: timerState.subjectId,
+          stepKey: timerState.stepKey,
+          blockMins: timerState.blockMins,
+          savedAtMs: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function clearPersistedTimerRuntimeState() {
+      try {
+        localStorage.removeItem(ACTIVE_TIMER_STORAGE_KEY);
+      } catch (e) {}
+    }
+
+    function restorePersistedTimerRuntimeState() {
+      try {
+        const raw = localStorage.getItem(ACTIVE_TIMER_STORAGE_KEY);
+        if (!raw) return false;
+        const saved = JSON.parse(raw);
+        if (!saved || typeof saved.totalSeconds !== 'number') return false;
+
+        timerState.totalSeconds = Math.max(60, Number(saved.totalSeconds) || (19 * 60));
+        timerState.label = saved.label || 'INT108 — New Concept';
+        timerState.isReward = Boolean(saved.isReward);
+        timerState.subjectId = saved.subjectId || null;
+        timerState.stepKey = saved.stepKey || null;
+        timerState.blockMins = Number(saved.blockMins) || Math.round(timerState.totalSeconds / 60);
+
+        if (saved.isRunning && saved.targetEndTimeMs) {
+          const msLeft = Number(saved.targetEndTimeMs) - Date.now();
+          if (msLeft <= 0) {
+            timerState.remainingSeconds = 0;
+            timerState.isRunning = false;
+            timerState.targetEndTimeMs = null;
+            clearPersistedTimerRuntimeState();
+            updateTimerUI();
+            setTimeout(() => {
+              completeTimedBlock();
+            }, 120);
+            return true;
+          } else {
+            timerState.remainingSeconds = Math.max(1, Math.ceil(msLeft / 1000));
+            timerState.targetEndTimeMs = Number(saved.targetEndTimeMs);
+            timerState.isRunning = true;
+            const ringClock = new Date(timerState.targetEndTimeMs).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            });
+            const statusEl = document.getElementById('timer-status-text');
+            if (statusEl) statusEl.textContent = `Active • Rings at ${ringClock}`;
+            if (timerState.intervalId) clearInterval(timerState.intervalId);
+            timerState.intervalId = setInterval(tickTimer, 250);
+            persistTimerRuntimeState();
+            updateTimerUI();
+            return true;
+          }
+        } else {
+          timerState.remainingSeconds = Math.max(0, Number(saved.remainingSeconds) ?? timerState.totalSeconds);
+          timerState.targetEndTimeMs = null;
+          timerState.isRunning = false;
+          const statusEl = document.getElementById('timer-status-text');
+          if (statusEl && timerState.remainingSeconds < timerState.totalSeconds) {
+            statusEl.textContent = 'Paused';
+          }
+          updateTimerUI();
+          return true;
+        }
+      } catch (e) {
+        return false;
+      }
+    }
 
     let weeklyPerfChartInstance = null;
     let weeklyTimeChartInstance = null;
@@ -2364,6 +2646,7 @@
       if (!a.active || !a.message || !String(a.message).trim()) return;
 
       const modal = document.getElementById('daily-alert-modal');
+      if (modal && !modal.classList.contains('hidden')) return;
       const msgEl = document.getElementById('daily-alert-message');
       const videoWrap = document.getElementById('daily-alert-video-wrap');
       const videoSlot = document.getElementById('daily-alert-video-slot');
@@ -2908,13 +3191,268 @@
 
     /**
      * =========================================================================
-     * REAL-CLOCK ALARM ENGINE (CONTINUOUS AUDIO + OS NOTIFICATION + HARDWARE SYNC)
+     * REAL-CLOCK ALARM ENGINE (SCREEN-OFF BACKGROUND GUARD + CUSTOM RINGTONE)
      * =========================================================================
      */
 
     let alarmRingIntervalId = null;
     let sharedAudioCtx = null;
     let titleFlashIntervalId = null;
+    let alarmAudioElement = null;
+    let isAlarmCurrentlyRinging = false;
+    let wakeLockSentinel = null;
+    let customRingtoneObjectUrl = null;
+    let customRingtoneFileName = '';
+    let isRingtonePreviewing = false;
+
+    const RINGTONE_IDB_NAME = 'timeflow_ringtone_store_v1';
+    const RINGTONE_IDB_STORE = 'ringtones';
+    const RINGTONE_IDB_KEY = 'custom_timer_ringtone';
+
+    function ensureSharedAlarmAudioElement() {
+      if (!alarmAudioElement) {
+        alarmAudioElement = document.createElement('audio');
+        alarmAudioElement.setAttribute('playsinline', '');
+        alarmAudioElement.setAttribute('webkit-playsinline', '');
+        alarmAudioElement.preload = 'auto';
+        alarmAudioElement.style.display = 'none';
+        document.body.appendChild(alarmAudioElement);
+
+        // Native OS audio thread tick: fires ~4 times/sec even when screen is off or tab is backgrounded
+        alarmAudioElement.addEventListener('timeupdate', () => {
+          if (timerState.isRunning && timerState.targetEndTimeMs && !isAlarmCurrentlyRinging) {
+            if (Date.now() >= timerState.targetEndTimeMs) {
+              tickTimer();
+            }
+          }
+        });
+      }
+      return alarmAudioElement;
+    }
+
+    function openRingtoneIDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(RINGTONE_IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(RINGTONE_IDB_STORE)) {
+            db.createObjectStore(RINGTONE_IDB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveCustomRingtoneToIDB(file) {
+      const db = await openRingtoneIDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(RINGTONE_IDB_STORE, 'readwrite');
+        tx.objectStore(RINGTONE_IDB_STORE).put({ name: file.name, type: file.type, blob: file }, RINGTONE_IDB_KEY);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+      });
+    }
+
+    async function loadCustomRingtoneFromIDB() {
+      try {
+        const db = await openRingtoneIDB();
+        const rec = await new Promise((resolve, reject) => {
+          const tx = db.transaction(RINGTONE_IDB_STORE, 'readonly');
+          const req = tx.objectStore(RINGTONE_IDB_STORE).get(RINGTONE_IDB_KEY);
+          req.onsuccess = () => { db.close(); resolve(req.result || null); };
+          req.onerror = () => { db.close(); reject(req.error); };
+        });
+        if (rec && rec.blob) {
+          if (customRingtoneObjectUrl) {
+            try { URL.revokeObjectURL(customRingtoneObjectUrl); } catch (_) {}
+          }
+          customRingtoneObjectUrl = URL.createObjectURL(rec.blob);
+          customRingtoneFileName = rec.name || 'Custom Ringtone';
+          updateCustomRingtoneUI();
+          return true;
+        }
+      } catch (e) {
+        console.warn('loadCustomRingtoneFromIDB error:', e);
+      }
+      updateCustomRingtoneUI();
+      return false;
+    }
+
+    async function clearCustomRingtone() {
+      stopAlarmRinging();
+      try {
+        const db = await openRingtoneIDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(RINGTONE_IDB_STORE, 'readwrite');
+          tx.objectStore(RINGTONE_IDB_STORE).delete(RINGTONE_IDB_KEY);
+          tx.oncomplete = () => { db.close(); resolve(); };
+          tx.onerror = () => { db.close(); reject(tx.error); };
+        });
+      } catch (e) {}
+      if (customRingtoneObjectUrl) {
+        try { URL.revokeObjectURL(customRingtoneObjectUrl); } catch (_) {}
+      }
+      customRingtoneObjectUrl = null;
+      customRingtoneFileName = '';
+      const inp = document.getElementById('custom-ringtone-file-input');
+      if (inp) inp.value = '';
+      updateCustomRingtoneUI();
+      showToast('Reverted to default built-in alarm chime.');
+    }
+
+    function updateCustomRingtoneUI() {
+      const lbl = document.getElementById('custom-ringtone-name');
+      const clearBtn = document.getElementById('clear-custom-ringtone-btn');
+      if (lbl) {
+        lbl.textContent = customRingtoneFileName
+          ? `🎵 ${customRingtoneFileName}`
+          : 'Default Built-in Alarm Chime';
+      }
+      if (clearBtn) {
+        if (customRingtoneFileName) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+      }
+    }
+
+    // Generate a real WAV Blob in memory so HTML5 <audio> plays natively even on locked mobile screens
+    let fallbackAlarmWavUrl = null;
+    function getFallbackAlarmWavUrl() {
+      if (fallbackAlarmWavUrl) return fallbackAlarmWavUrl;
+      const sampleRate = 22050;
+      const durationSec = 1.4;
+      const numSamples = Math.floor(sampleRate * durationSec);
+      const buffer = new ArrayBuffer(44 + numSamples * 2);
+      const view = new DataView(buffer);
+      const writeStr = (offset, str) => {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      };
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + numSamples * 2, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, numSamples * 2, true);
+
+      const notes = [
+        { start: 0.00, end: 0.14, freq: 880 },
+        { start: 0.17, end: 0.31, freq: 880 },
+        { start: 0.34, end: 0.50, freq: 1046.5 },
+        { start: 0.54, end: 0.76, freq: 1174.66 }
+      ];
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        let sample = 0;
+        for (const n of notes) {
+          if (t >= n.start && t <= n.end) {
+            const env = Math.min(1, (t - n.start) * 40) * Math.min(1, (n.end - t) * 25);
+            sample += Math.sin(2 * Math.PI * n.freq * t) * 0.65 * env;
+          }
+        }
+        view.setInt16(44 + i * 2, Math.max(-1, Math.min(1, sample)) * 32767, true);
+      }
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      fallbackAlarmWavUrl = URL.createObjectURL(blob);
+      return fallbackAlarmWavUrl;
+    }
+
+    // Near-silent WAV loop played on the SAME shared <audio> element to keep media session alive & unlocked in background
+    let silentGuardWavUrl = null;
+    function getSilentGuardWavUrl() {
+      if (silentGuardWavUrl) return silentGuardWavUrl;
+      const sampleRate = 8000;
+      const numSamples = sampleRate * 2;
+      const buffer = new ArrayBuffer(44 + numSamples * 2);
+      const view = new DataView(buffer);
+      const writeStr = (offset, str) => {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      };
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + numSamples * 2, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, numSamples * 2, true);
+      for (let i = 0; i < numSamples; i++) {
+        const val = (i % 400 === 0) ? 6 : 0;
+        view.setInt16(44 + i * 2, val, true);
+      }
+      silentGuardWavUrl = URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }));
+      return silentGuardWavUrl;
+    }
+
+    async function startBackgroundScreenOffGuard(labelText) {
+      const guardBadge = document.getElementById('bg-audio-guard-badge');
+      isAlarmCurrentlyRinging = false;
+      try {
+        const el = ensureSharedAlarmAudioElement();
+        el.loop = true;
+        el.volume = 0.02;
+        el.src = getSilentGuardWavUrl();
+        await el.play();
+
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: labelText || 'TimeFlow Focus Session',
+            artist: customRingtoneFileName ? `Armed: ${customRingtoneFileName}` : 'TimeFlow Real-Clock Alarm Armed',
+            album: 'Screen-Off Alarm Protection'
+          });
+          navigator.mediaSession.playbackState = 'playing';
+        }
+        if (guardBadge) {
+          guardBadge.textContent = '● Background Audio Armed';
+          guardBadge.className = 'font-mono font-bold text-emerald-500';
+        }
+      } catch (e) {
+        if (guardBadge) {
+          guardBadge.textContent = '● Armed';
+          guardBadge.className = 'font-mono font-bold text-amber-400';
+        }
+      }
+
+      if ('wakeLock' in navigator && !wakeLockSentinel) {
+        try {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+          wakeLockSentinel.addEventListener('release', () => { wakeLockSentinel = null; });
+        } catch (e) {}
+      }
+    }
+
+    function stopBackgroundScreenOffGuard() {
+      // Only pause the shared audio element if the alarm itself is NOT actively ringing!
+      if (alarmAudioElement && !isAlarmCurrentlyRinging) {
+        try {
+          alarmAudioElement.pause();
+          alarmAudioElement.currentTime = 0;
+        } catch (e) {}
+      }
+      if ('mediaSession' in navigator && !isAlarmCurrentlyRinging) {
+        try { navigator.mediaSession.playbackState = 'none'; } catch (e) {}
+      }
+      if (wakeLockSentinel) {
+        try { wakeLockSentinel.release(); } catch (e) {}
+        wakeLockSentinel = null;
+      }
+      const guardBadge = document.getElementById('bg-audio-guard-badge');
+      if (guardBadge) {
+        guardBadge.textContent = 'Standby';
+        guardBadge.className = 'font-mono font-bold text-slate-400';
+      }
+    }
 
     function unlockAudioContext() {
       try {
@@ -2954,13 +3492,70 @@
       } catch (e) {}
     }
 
+    function startLoopingAlarmAudio(titleText) {
+      isAlarmCurrentlyRinging = true;
+      const el = ensureSharedAlarmAudioElement();
+      el.loop = true;
+      el.volume = 1.0;
+      el.src = customRingtoneObjectUrl || getFallbackAlarmWavUrl();
+
+      const playPromise = el.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          playSingleAlarmBurst();
+          const resumeOnce = () => {
+            document.removeEventListener('pointerdown', resumeOnce);
+            document.removeEventListener('keydown', resumeOnce);
+            if (isAlarmCurrentlyRinging && alarmAudioElement && alarmAudioElement.paused) {
+              alarmAudioElement.src = customRingtoneObjectUrl || getFallbackAlarmWavUrl();
+              alarmAudioElement.loop = true;
+              alarmAudioElement.volume = 1.0;
+              alarmAudioElement.play().catch(() => {});
+            }
+          };
+          document.addEventListener('pointerdown', resumeOnce, { once: true });
+          document.addEventListener('keydown', resumeOnce, { once: true });
+        });
+      }
+
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: `⏰ ${titleText || 'Focus Session Complete!'}`,
+            artist: customRingtoneFileName || 'TimeFlow Alarm',
+            album: 'Tap Dismiss Alarm in Browser'
+          });
+          navigator.mediaSession.playbackState = 'playing';
+          navigator.mediaSession.setActionHandler('pause', () => stopAlarmRinging());
+          navigator.mediaSession.setActionHandler('stop', () => stopAlarmRinging());
+        } catch (e) {}
+      }
+
+      if (!customRingtoneObjectUrl) {
+        playSingleAlarmBurst();
+        alarmRingIntervalId = setInterval(playSingleAlarmBurst, 1400);
+      }
+    }
+
+    function previewCustomRingtone() {
+      if (isRingtonePreviewing) {
+        stopAlarmRinging();
+        return;
+      }
+      stopAlarmRinging();
+      isRingtonePreviewing = true;
+      const btn = document.getElementById('test-custom-ringtone-btn');
+      if (btn) btn.textContent = '⏹ Stop';
+      startLoopingAlarmAudio('Ringtone Preview');
+      showToast(customRingtoneFileName ? `Playing "${customRingtoneFileName}"` : 'Playing default alarm chime');
+    }
+
     function triggerRealAlarmClock(titleText) {
       stopAlarmRinging();
-      playSingleAlarmBurst();
-      alarmRingIntervalId = setInterval(playSingleAlarmBurst, 1400);
+      startLoopingAlarmAudio(titleText);
 
       if (navigator.vibrate) {
-        try { navigator.vibrate([400, 200, 400, 200, 600]); } catch (e) {}
+        try { navigator.vibrate([500, 200, 500, 200, 700, 200, 700]); } catch (e) {}
       }
 
       const banner = document.getElementById('global-alarm-banner');
@@ -2982,7 +3577,7 @@
       if ('Notification' in window && Notification.permission === 'granted') {
         try {
           const notif = new Notification('⏰ TimeFlow Real-Clock Alarm!', {
-            body: `${titleText} has completed! Click to dismiss alarm.`,
+            body: `${titleText} has completed! Tap to dismiss alarm.`,
             requireInteraction: true,
             tag: 'timeflow-real-alarm'
           });
@@ -2996,6 +3591,20 @@
     }
 
     function stopAlarmRinging() {
+      isRingtonePreviewing = false;
+      isAlarmCurrentlyRinging = false;
+      const previewBtn = document.getElementById('test-custom-ringtone-btn');
+      if (previewBtn) previewBtn.textContent = '▶ Test';
+
+      if (alarmAudioElement) {
+        try {
+          alarmAudioElement.pause();
+          alarmAudioElement.currentTime = 0;
+        } catch (e) {}
+      }
+      if ('mediaSession' in navigator) {
+        try { navigator.mediaSession.playbackState = 'none'; } catch (e) {}
+      }
       if (alarmRingIntervalId) {
         clearInterval(alarmRingIntervalId);
         alarmRingIntervalId = null;
@@ -3130,7 +3739,9 @@
       const availableMins = Math.round(availableHrs * 60);
 
       const rewardRatio = appState.config.rewardRatio ?? 0.25;
-      const allocations = appState.config.subjects.map(sub => {
+      // Exclude subjects whose study time ratio is set to 0%
+      const activeSubjects = appState.config.subjects.filter(sub => (Number(sub.pct) || 0) > 0);
+      const allocations = activeSubjects.map(sub => {
         const rawSubMins = availableHrs * (sub.pct / 100) * 60;
         const mainMins = Math.round(rawSubMins);
         const rewardMins = sub.hasReward ? Math.round(mainMins * rewardRatio) : 0;
@@ -3206,40 +3817,70 @@
       if (changed) saveAppState();
     }
 
+    /**
+     * Daily Progress calculated strictly with respect to:
+     * 1) Available Study Time (S)
+     * 2) Time Used to Study across active (>0%) subjects
+     * 3) Configured Subject Ratios
+     */
     function calculateDailyProgressStats(dayData, metrics) {
-      const totalTasks = dayData.tasks.length;
-      const doneTasks = dayData.tasks.filter(t => t.completed).length;
-      const taskRatio = totalTasks > 0 ? doneTasks / totalTasks : 1;
+      const activeAllocs = metrics.allocations; // already filtered to pct > 0
+      const activeIds = new Set(activeAllocs.map(s => s.id));
+      const activeRewardCodes = new Set(activeAllocs.filter(s => s.hasReward && s.rewardCode).map(s => s.rewardCode));
 
-      const totalSubjectItems = metrics.allocations.reduce((acc, s) => acc + 1 + (s.hasReward ? 1 : 0), 0);
-      const doneSubjectItems = dayData.completedSubjects.length;
-      const subjectRatio = totalSubjectItems > 0 ? Math.min(1, doneSubjectItems / totalSubjectItems) : 0;
+      const totalSubjectItems = activeAllocs.reduce((acc, s) => acc + 1 + (s.hasReward ? 1 : 0), 0);
+      const doneSubjectItems = dayData.completedSubjects.filter(
+        code => activeIds.has(code) || activeRewardCodes.has(code)
+      ).length;
 
       let spentStudyMins = 0;
-      if (dayData.studyProgress) {
-        Object.values(dayData.studyProgress).forEach(p => {
-          spentStudyMins += (p.spentMins || 0);
-        });
-      }
-      let checkedAllocMins = 0;
-      metrics.allocations.forEach(sub => {
-        if (dayData.completedSubjects.includes(sub.id)) {
-          checkedAllocMins += sub.mainMins;
-        }
-      });
-      const effectiveFocusMins = Math.max(spentStudyMins, checkedAllocMins);
-      const focusRatio = metrics.availableMins > 0 ? Math.min(1, effectiveFocusMins / metrics.availableMins) : 0;
+      let ratioWeightedCompletion = 0;
+      const totalConfiguredRatioPct = activeAllocs.reduce((acc, s) => acc + (Number(s.pct) || 0), 0);
 
-      const overallPct = Math.round((taskRatio * 0.30 + subjectRatio * 0.40 + focusRatio * 0.30) * 100);
+      activeAllocs.forEach(sub => {
+        const prog = (dayData.studyProgress && dayData.studyProgress[sub.id]) || { spentMins: 0 };
+        const isSubDone = dayData.completedSubjects.includes(sub.id);
+        const usedForSub = isSubDone
+          ? Math.max(prog.spentMins || 0, sub.mainMins)
+          : (prog.spentMins || 0);
+
+        spentStudyMins += usedForSub;
+
+        const subFraction = sub.mainMins > 0
+          ? Math.min(1, usedForSub / sub.mainMins)
+          : (isSubDone ? 1 : 0);
+        ratioWeightedCompletion += (Number(sub.pct) || 0) * subFraction;
+      });
+
+      const targetAllocatedStudyMins = activeAllocs.reduce((acc, s) => acc + s.mainMins, 0);
+      const effectiveTargetMins = targetAllocatedStudyMins > 0 ? targetAllocatedStudyMins : metrics.availableMins;
+
+      // Ratio between time used to study & available study time
+      const timeUsedRatio = metrics.availableMins > 0
+        ? Math.min(1, spentStudyMins / metrics.availableMins)
+        : 0;
+      const allocatedTimeRatio = effectiveTargetMins > 0
+        ? Math.min(1, spentStudyMins / effectiveTargetMins)
+        : 0;
+      const subjectRatioShare = totalConfiguredRatioPct > 0
+        ? Math.min(1, ratioWeightedCompletion / totalConfiguredRatioPct)
+        : 0;
+
+      // Combined progress from Available Study Time, Time Used to Study, and Subject Ratios
+      const overallPct = Math.round(((allocatedTimeRatio * 0.50) + (subjectRatioShare * 0.50)) * 100);
 
       return {
         overallPct,
-        totalTasks,
-        doneTasks,
         totalSubjectItems,
         doneSubjectItems,
-        effectiveFocusMins,
-        targetStudyMins: metrics.availableMins
+        effectiveFocusMins: spentStudyMins,
+        targetStudyMins: metrics.availableMins,
+        effectiveAllocatedMins: effectiveTargetMins,
+        completedRatioPct: Number(ratioWeightedCompletion.toFixed(1)),
+        totalConfiguredRatioPct: Number(totalConfiguredRatioPct.toFixed(1)),
+        activeSubjectsCount: activeAllocs.length,
+        totalSubjectsCount: appState.config.subjects.length,
+        timeUsedPctOfAvail: Math.round(timeUsedRatio * 100)
       };
     }
 
@@ -3311,7 +3952,7 @@
       document.getElementById('kpi-routines-unexpected-sub').textContent = `${metrics.fixedHrs.toFixed(2)}h fixed + ${metrics.unexpectedHrs.toFixed(2)}h unexp`;
 
       document.getElementById('kpi-daily-progress-pct').textContent = `${progStats.overallPct}%`;
-      document.getElementById('kpi-daily-focused-mins').textContent = `${progStats.effectiveFocusMins}m focused`;
+      document.getElementById('kpi-daily-focused-mins').textContent = `${progStats.effectiveFocusMins}m / ${progStats.targetStudyMins}m`;
       document.getElementById('kpi-daily-progress-bar').style.width = `${progStats.overallPct}%`;
 
       document.getElementById('kpi-available-hrs').innerHTML = `${metrics.availableHrs.toFixed(2)}<span class="text-sm font-sans font-semibold text-indigo-200 ml-1">hrs</span>`;
@@ -3347,17 +3988,20 @@
         badge.className = 'px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 shrink-0';
       }
 
-      const tlPct = progStats.totalTasks > 0 ? Math.round((progStats.doneTasks / progStats.totalTasks) * 100) : 100;
-      document.getElementById('prog-timeline-text').textContent = `${progStats.doneTasks}/${progStats.totalTasks}`;
-      document.getElementById('prog-timeline-bar').style.width = `${tlPct}%`;
-
-      const subPct = progStats.totalSubjectItems > 0 ? Math.round((progStats.doneSubjectItems / progStats.totalSubjectItems) * 100) : 0;
-      document.getElementById('prog-subjects-text').textContent = `${progStats.doneSubjectItems}/${progStats.totalSubjectItems}`;
-      document.getElementById('prog-subjects-bar').style.width = `${subPct}%`;
-
       const focPct = progStats.targetStudyMins > 0 ? Math.min(100, Math.round((progStats.effectiveFocusMins / progStats.targetStudyMins) * 100)) : 0;
-      document.getElementById('prog-focus-text').textContent = `${progStats.effectiveFocusMins} / ${progStats.targetStudyMins}m`;
+      document.getElementById('prog-focus-text').textContent = `${progStats.effectiveFocusMins} / ${progStats.targetStudyMins}m (${progStats.timeUsedPctOfAvail}%)`;
       document.getElementById('prog-focus-bar').style.width = `${focPct}%`;
+
+      const ratioBarPct = progStats.totalConfiguredRatioPct > 0
+        ? Math.min(100, Math.round((progStats.completedRatioPct / progStats.totalConfiguredRatioPct) * 100))
+        : 0;
+      document.getElementById('prog-ratio-text').textContent = `${progStats.completedRatioPct}% / ${progStats.totalConfiguredRatioPct}%`;
+      document.getElementById('prog-ratio-bar').style.width = `${ratioBarPct}%`;
+
+      const activeSubsEl = document.getElementById('prog-active-subs-count');
+      if (activeSubsEl) {
+        activeSubsEl.textContent = `${progStats.activeSubjectsCount}/${progStats.totalSubjectsCount}`;
+      }
     }
 
     function renderCoreInputs(dayData) {
@@ -3472,6 +4116,15 @@
       document.getElementById('matrix-reward-pct').textContent = `${Math.round(appState.config.rewardRatio * 100)}%`;
       document.getElementById('tasks-completed-pill').textContent = `${progStats.doneSubjectItems} / ${progStats.totalSubjectItems} Done`;
 
+      if (metrics.allocations.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
+            All subjects are currently set to <strong>0%</strong> in Subject Ratios. Click <strong>Edit Ratios</strong> above to allocate study time.
+          </div>
+        `;
+        return;
+      }
+
       grid.innerHTML = metrics.allocations.map(sub => {
         const timerInfo = getSubjectTimerCompletionInfo(dayData, sub);
         const isMainDone = dayData.completedSubjects.includes(sub.id);
@@ -3486,7 +4139,7 @@
             : 0;
 
         return `
-          <div onclick="selectSubjectForCalc('${sub.id}')" class="cursor-pointer rounded-xl p-3.5 border transition-all min-w-0 ${
+          <div onclick="selectSubjectForCalc('${sub.id}'); switchToTab('calculator');" class="cursor-pointer rounded-2xl p-4 border transition-all min-w-0 ${
             isSelected
               ? 'bg-indigo-500/10 border-indigo-500 ring-1 ring-indigo-500 shadow-sm'
               : 'bg-slate-50/80 dark:bg-obsidian-850/70 border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600'
@@ -3517,12 +4170,12 @@
               </div>
             </div>
 
-            <div class="mt-2 w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div class="mt-2.5 w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
               <div class="h-full ${isMainDone ? 'bg-emerald-500' : 'bg-indigo-500'} transition-all duration-300" style="width: ${stepPct}%"></div>
             </div>
 
             ${sub.hasReward ? `
-              <div class="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2">
+              <div class="mt-3 pt-2.5 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
                   <button type="button" onclick="event.stopPropagation(); attemptRewardMatrixApproval('${sub.id}', '${sub.rewardCode}', ${sub.rewardMins})" title="${isRewardDone ? 'Reward Claimed via Timer' : 'Locked until parent subject & reward timer finish'}" class="w-4 h-4 rounded flex items-center justify-center border transition shrink-0 ${
                     isRewardDone
@@ -3540,7 +4193,7 @@
                 </span>
               </div>
             ` : `
-              <div class="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+              <div class="mt-3 pt-2.5 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
                 <span class="truncate">${isVideoSub ? 'Requires Timer + Video Proof' : 'Timer-Gated Execution'}</span>
                 <span class="shrink-0">No Reward</span>
               </div>
@@ -3572,9 +4225,9 @@
           info.nextPendingStep.key
         );
       }
-      switchToTab('calculator');
+      switchToTab('timer');
       showToast(
-        `Locked: Run all ${info.totalRequiredSteps} timers for ${sub.code} first (${info.doneStepsCount}/${info.totalRequiredSteps} done). Queued next timer!`,
+        `Locked: Run all ${info.totalRequiredSteps} timers for ${sub.code} first (${info.doneStepsCount}/${info.totalRequiredSteps} done). Queued in Focus Timer!`,
         'error'
       );
     }
@@ -3592,7 +4245,7 @@
 
       const info = getSubjectTimerCompletionInfo(dayData, sub);
       selectSubjectForCalc(sub.id);
-      switchToTab('calculator');
+      switchToTab('timer');
 
       if (!info.allTimersFinished) {
         if (info.nextPendingStep) {
@@ -3620,12 +4273,18 @@
       if (!activeSub) return;
 
       const div = calculateStudyDivision(activeSub.mainMins);
-      document.getElementById('quick-calc-subject-title').textContent = `${activeSub.code} (${activeSub.name}) — ${div.total} mins`;
-      document.getElementById('qcalc-new').textContent = div.newConcept;
-      document.getElementById('qcalc-today').textContent = div.todayProb;
-      document.getElementById('qcalc-pday').textContent = div.pDayProb;
-      document.getElementById('qcalc-pweek').textContent = div.pWeekProb;
-      document.getElementById('qcalc-video').textContent = div.video;
+      const titleEl = document.getElementById('quick-calc-subject-title');
+      if (titleEl) titleEl.textContent = `${activeSub.code} (${activeSub.name}) — ${div.total} mins`;
+      const elNew = document.getElementById('qcalc-new');
+      const elToday = document.getElementById('qcalc-today');
+      const elPday = document.getElementById('qcalc-pday');
+      const elPweek = document.getElementById('qcalc-pweek');
+      const elVideo = document.getElementById('qcalc-video');
+      if (elNew) elNew.textContent = div.newConcept;
+      if (elToday) elToday.textContent = div.todayProb;
+      if (elPday) elPday.textContent = div.pDayProb;
+      if (elPweek) elPweek.textContent = div.pWeekProb;
+      if (elVideo) elVideo.textContent = div.video;
     }
 
     function renderFullStudyDivisionTab(metrics) {
@@ -3634,9 +4293,12 @@
         if (!metrics.allocations.some(s => s.id === selectedSubjectId)) {
           selectedSubjectId = metrics.allocations[0].id;
         }
-        selector.innerHTML = metrics.allocations.map(s =>
-          `<option value="${s.id}" ${s.id === selectedSubjectId ? 'selected' : ''}>${s.code} — ${s.name} (${s.mainMins}m)</option>`
+        const desiredOptionsHtml = metrics.allocations.map(s =>
+          `<option value="${s.id}">${s.code} — ${s.name} (${s.mainMins}m)</option>`
         ).join('');
+        if (selector.innerHTML !== desiredOptionsHtml) {
+          selector.innerHTML = desiredOptionsHtml;
+        }
         selector.value = selectedSubjectId;
       }
 
@@ -3712,8 +4374,8 @@
             <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <span class="text-base sm:text-lg font-black font-mono text-slate-900 dark:text-white tabular-nums">${step.mins}m</span>
               ${!isDone && step.mins > 0 ? `
-                <button type="button" onclick="loadTimerPreset('${escapeHtml(activeSub.code)} — ${escapeHtml(step.label.replace(/^\d+\.\s*/, ''))}', ${step.mins}, false, '${activeSub.id}', '${step.key}')" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold transition shadow-sm">
-                  Run
+                <button type="button" onclick="loadTimerPreset('${escapeHtml(activeSub.code)} — ${escapeHtml(step.label.replace(/^\d+\.\s*/, ''))}', ${step.mins}, false, '${activeSub.id}', '${step.key}'); switchToTab('timer');" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold transition shadow-sm">
+                  Run in Timer
                 </button>
               ` : `
                 <span class="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">Done</span>
@@ -3762,6 +4424,7 @@
       }
       if (mins > 0) {
         loadTimerPreset(title, mins, false, subjectId, stepKey);
+        switchToTab('timer');
       }
       showToast('Manual ticking disabled — complete the focus timer to approve this task!', 'error');
     }
@@ -4388,11 +5051,11 @@
      * =========================================================================
      */
 
-    function getSevenDayWindowDates(anchorDateStr) {
+    // Rolling Last-N-Days window ending on anchorDateStr (inclusive)
+    function getRollingWindowDates(anchorDateStr, numDays) {
       const dates = [];
       const base = new Date(anchorDateStr + 'T00:00:00');
-      const startOffset = -2;
-      for (let i = startOffset; i < startOffset + 7; i++) {
+      for (let i = -(numDays - 1); i <= 0; i++) {
         const d = new Date(base);
         d.setDate(base.getDate() + i);
         const yyyy = d.getFullYear();
@@ -4403,13 +5066,57 @@
       return dates;
     }
 
+    function getSevenDayWindowDates(anchorDateStr) {
+      return getRollingWindowDates(anchorDateStr, 7);
+    }
+
+    function getThirtyDayWindowDates(anchorDateStr) {
+      return getRollingWindowDates(anchorDateStr, 30);
+    }
+
+    /**
+     * Computes Study + Reward utilized minutes out of Total Time Remained for Study (S)
+     * for a given day object.
+     */
+    function getDayUtilizationMetrics(dData, m) {
+      let studyUsedMins = 0;
+      let rewardUsedMins = 0;
+
+      m.allocations.forEach(sub => {
+        const prog = (dData.studyProgress && dData.studyProgress[sub.id]) || { spentMins: 0 };
+        const isSubDone = Array.isArray(dData.completedSubjects) && dData.completedSubjects.includes(sub.id);
+        const sMins = isSubDone
+          ? Math.max(prog.spentMins || 0, sub.mainMins)
+          : (prog.spentMins || 0);
+        studyUsedMins += sMins;
+
+        if (sub.hasReward && sub.rewardCode && Array.isArray(dData.completedSubjects) && dData.completedSubjects.includes(sub.rewardCode)) {
+          rewardUsedMins += (sub.rewardMins || 0);
+        }
+      });
+
+      const totalUtilizedMins = studyUsedMins + rewardUsedMins;
+      const remainedStudyMins = m.availableMins;
+      const utilizationPct = remainedStudyMins > 0
+        ? Math.min(100, Math.round((totalUtilizedMins / remainedStudyMins) * 100))
+        : 0;
+
+      return {
+        studyUsedMins,
+        rewardUsedMins,
+        totalUtilizedMins,
+        remainedStudyMins,
+        utilizationPct
+      };
+    }
+
     function renderMasterSpreadsheetTable() {
       const dates = getSevenDayWindowDates(currentDate);
       const thead = document.getElementById('matrix-table-head');
       const tbody = document.getElementById('matrix-table-body');
 
       const cols = [];
-      appState.config.subjects.forEach(s => {
+      appState.config.subjects.filter(s => (Number(s.pct) || 0) > 0).forEach(s => {
         cols.push({ label: s.code, type: s.code === 'TRADING' || s.code === 'VIDEO E+U' ? 'orange' : 'yellow' });
         if (s.hasReward) cols.push({ label: s.rewardCode, type: 'reward' });
       });
@@ -4459,12 +5166,77 @@
       }).join('');
     }
 
+    let activeAnalyticsPeriod = 'weekly';
+    let monthlyChartInstance = null;
+
+    function switchAnalyticsPeriod(period) {
+      activeAnalyticsPeriod = period;
+      const wkBtn = document.getElementById('analytics-subtab-weekly');
+      const moBtn = document.getElementById('analytics-subtab-monthly');
+      const wkView = document.getElementById('analytics-weekly-view');
+      const moView = document.getElementById('analytics-monthly-view');
+
+      if (period === 'monthly') {
+        moBtn.className = 'px-4 py-2 rounded-lg text-xs font-extrabold bg-indigo-600 text-white shadow-sm transition';
+        wkBtn.className = 'px-4 py-2 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition';
+        wkView.classList.add('hidden');
+        moView.classList.remove('hidden');
+      } else {
+        wkBtn.className = 'px-4 py-2 rounded-lg text-xs font-extrabold bg-indigo-600 text-white shadow-sm transition';
+        moBtn.className = 'px-4 py-2 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition';
+        moView.classList.add('hidden');
+        wkView.classList.remove('hidden');
+      }
+      renderAnalyticsTab();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function formatTaskLogItemHtml(item, badgeLabel) {
+      const durMins = getTaskDurationMinutes(item.task);
+      const durHrsDecimal = (durMins / 60).toFixed(2);
+      const durHM = formatHoursToHM(durMins / 60);
+      return `
+        <div class="py-3.5 flex flex-wrap items-start justify-between gap-3">
+          <div class="flex items-start gap-3 min-w-0">
+            <span class="text-lg shrink-0">${item.task.icon || '✅'}</span>
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">${escapeHtml(item.task.name)}</span>
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-obsidian-850 text-slate-600 dark:text-slate-300">${escapeHtml(badgeLabel)}</span>
+                <span class="text-[11px] font-mono font-extrabold px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20">
+                  ⏱ ${durHrsDecimal} hrs (${durHM})
+                </span>
+              </div>
+              <p class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                ${item.task.completionNote ? `"${escapeHtml(item.task.completionNote)}"` : 'Marked as completed'}
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-xs font-mono font-bold text-slate-700 dark:text-slate-200">
+              ${format12Hour(item.task.startTime)} → ${format12Hour(item.task.endTime)}
+            </div>
+            <div class="text-[10px] font-mono text-slate-400 mt-0.5">${durMins} mins total</div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderAnalyticsTab() {
+      // --- 1. WEEKLY DATA (LAST 7 DAYS ENDING ON ACTIVE DATE) ---
       const dates = getSevenDayWindowDates(currentDate);
-      let totalCompleted = 0;
-      let totalStudyHrs = 0;
-      let totalUnexpectedHrs = 0;
-      const completedCounts = [];
+      const windowLbl = document.getElementById('analytics-window-label');
+      if (windowLbl) {
+        windowLbl.textContent = activeAnalyticsPeriod === 'monthly'
+          ? `Last 30 Days: ${getThirtyDayWindowDates(currentDate)[0]} → ${currentDate}`
+          : `Last 7 Days: ${dates[0]} → ${currentDate}`;
+      }
+
+      let wkRemainedStudyMins = 0;
+      let wkStudyUsedMins = 0;
+      let wkRewardUsedMins = 0;
+      let wkUnexpectedHrs = 0;
+      const wkUtilPctSeries = [];
       const sleepSeries = [];
       const classSeries = [];
       const routineUnexpSeries = [];
@@ -4472,70 +5244,213 @@
       const allNotesLogs = [];
 
       dates.forEach((dStr, idx) => {
-        const dData = getDayData(dStr);
+        const existingDay = appState.days[dStr];
+        const dData = existingDay || {
+          date: dStr,
+          sleepHours: 7.5,
+          classesCount: 3,
+          tasks: createDefaultFixedRoutines(),
+          completedSubjects: [],
+          studyProgress: {}
+        };
         const m = calculateDayMetrics(dData);
-        const doneCount = dData.completedSubjects.length;
-        totalCompleted += doneCount;
-        totalStudyHrs += m.availableHrs;
-        totalUnexpectedHrs += m.totalRoutineAndUnexpectedHrs;
+        const util = getDayUtilizationMetrics(dData, m);
 
-        completedCounts.push(doneCount);
+        wkRemainedStudyMins += util.remainedStudyMins;
+        wkStudyUsedMins += util.studyUsedMins;
+        wkRewardUsedMins += util.rewardUsedMins;
+        wkUnexpectedHrs += m.totalRoutineAndUnexpectedHrs;
+
+        wkUtilPctSeries.push(util.utilizationPct);
         sleepSeries.push(m.sleepHrs);
         classSeries.push(m.classesHrs);
         routineUnexpSeries.push(m.totalRoutineAndUnexpectedHrs);
         studySeries.push(m.availableHrs);
 
-        dData.tasks.forEach(t => {
-          if (t.completed || t.completionNote || t.category === 'sleep') {
-            allNotesLogs.push({ date: dStr, dayNum: idx + 1, task: t });
-          }
-        });
+        if (existingDay) {
+          existingDay.tasks.forEach(t => {
+            if (t.completed || t.completionNote || t.category === 'sleep') {
+              allNotesLogs.push({ date: dStr, dayNum: idx + 1, task: t });
+            }
+          });
+        }
       });
 
-      // Latest dates shown at the very top
       allNotesLogs.sort((a, b) => {
         const cmp = b.date.localeCompare(a.date);
         if (cmp !== 0) return cmp;
         return timeToMinutes(b.task.startTime) - timeToMinutes(a.task.startTime);
       });
 
-      document.getElementById('wk-kpi-completed').textContent = totalCompleted;
-      document.getElementById('wk-kpi-study-hrs').textContent = `${totalStudyHrs.toFixed(2)} hrs`;
-      document.getElementById('wk-kpi-study-mins').textContent = `${Math.round(totalStudyHrs * 60)} total minutes allocated`;
-      document.getElementById('wk-kpi-unexpected-hrs').textContent = `${totalUnexpectedHrs.toFixed(2)} hrs`;
-      document.getElementById('wk-kpi-logs-count').textContent = allNotesLogs.length + appState.videos.length;
+      const wkTotalUtilizedMins = wkStudyUsedMins + wkRewardUsedMins;
+      const wkProgressPct = wkRemainedStudyMins > 0
+        ? Math.min(100, Math.round((wkTotalUtilizedMins / wkRemainedStudyMins) * 100))
+        : 0;
+      const wkDateSet = new Set(dates);
+      const wkVideosCount = appState.videos.filter(v => v.date && wkDateSet.has(v.date)).length;
+
+      document.getElementById('wk-kpi-completed').textContent = `${wkProgressPct}%`;
+      document.getElementById('wk-kpi-progress-sub').textContent = `${(wkTotalUtilizedMins / 60).toFixed(2)}h utilized / ${(wkRemainedStudyMins / 60).toFixed(2)}h remained`;
+      document.getElementById('wk-kpi-utilized-hrs').textContent = `${(wkTotalUtilizedMins / 60).toFixed(2)} hrs`;
+      document.getElementById('wk-kpi-utilized-sub').textContent = `${(wkStudyUsedMins / 60).toFixed(2)}h study + ${(wkRewardUsedMins / 60).toFixed(2)}h reward`;
+      document.getElementById('wk-kpi-study-hrs').textContent = `${(wkRemainedStudyMins / 60).toFixed(2)} hrs`;
+      document.getElementById('wk-kpi-study-mins').textContent = `${wkRemainedStudyMins} mins remained across 7 days`;
+      document.getElementById('wk-kpi-logs-count').textContent = allNotesLogs.length + wkVideosCount;
+      document.getElementById('wk-kpi-unexpected-hrs').textContent = `${wkUnexpectedHrs.toFixed(2)}h deductions in 7d`;
 
       const feed = document.getElementById('weekly-logs-feed');
       if (allNotesLogs.length === 0) {
-        feed.innerHTML = `<div class="py-8 text-center text-xs text-slate-400">No completed tasks or notes recorded for this week yet.</div>`;
+        feed.innerHTML = `<div class="py-8 text-center text-xs text-slate-400">No completed tasks or notes recorded in the last 7 days yet.</div>`;
       } else {
-        feed.innerHTML = allNotesLogs.map(item => `
-          <div class="py-3 flex flex-wrap items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <span class="text-lg">${item.task.icon || '✅'}</span>
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-extrabold text-slate-900 dark:text-white">${escapeHtml(item.task.name)}</span>
-                  <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-obsidian-850 text-slate-600 dark:text-slate-300">${item.date} (Day ${item.dayNum})</span>
-                </div>
-                <p class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
-                  ${item.task.completionNote ? `"${escapeHtml(item.task.completionNote)}"` : 'Marked as completed'}
-                </p>
-              </div>
-            </div>
-            <div class="text-xs font-mono text-slate-500">
-              ${format12Hour(item.task.startTime)} – ${format12Hour(item.task.endTime)}
-            </div>
-          </div>
-        `).join('');
+        feed.innerHTML = allNotesLogs.map(item =>
+          formatTaskLogItemHtml(item, `${item.date} (Day ${item.dayNum})`)
+        ).join('');
       }
 
-      if (!document.getElementById('tab-analytics').classList.contains('hidden')) {
-        renderCharts(dates, completedCounts, sleepSeries, classSeries, routineUnexpSeries, studySeries);
+      if (!document.getElementById('tab-analytics').classList.contains('hidden') && activeAnalyticsPeriod === 'weekly') {
+        renderCharts(dates, wkUtilPctSeries, sleepSeries, classSeries, routineUnexpSeries, studySeries);
+      }
+
+      // --- 2. MONTHLY DATA (LAST 30 DAYS ENDING ON ACTIVE DATE) ---
+      const monthDates = getThirtyDayWindowDates(currentDate);
+      const monthDateSet = new Set(monthDates);
+
+      let moRemainedStudyMins = 0;
+      let moStudyUsedMins = 0;
+      let moRewardUsedMins = 0;
+      const moLogs = [];
+      const moRemainedSeries = [];
+      const moUtilizedSeries = [];
+      const moDayRowsHtml = [];
+
+      monthDates.forEach(dStr => {
+        const existingDay = appState.days[dStr];
+        const dData = existingDay || {
+          date: dStr,
+          sleepHours: 7.5,
+          classesCount: 3,
+          tasks: createDefaultFixedRoutines(),
+          completedSubjects: [],
+          studyProgress: {}
+        };
+        const m = calculateDayMetrics(dData);
+        const util = getDayUtilizationMetrics(dData, m);
+
+        moRemainedStudyMins += util.remainedStudyMins;
+        moStudyUsedMins += util.studyUsedMins;
+        moRewardUsedMins += util.rewardUsedMins;
+
+        moRemainedSeries.push(Number((util.remainedStudyMins / 60).toFixed(2)));
+        moUtilizedSeries.push(Number((util.totalUtilizedMins / 60).toFixed(2)));
+
+        if (existingDay) {
+          existingDay.tasks.forEach(t => {
+            if (t.completed || t.completionNote || t.category === 'sleep') {
+              moLogs.push({ date: dStr, task: t });
+            }
+          });
+        }
+
+        const doneTaskCount = dData.tasks.filter(t => t.completed).length;
+        const isCurrent = dStr === currentDate;
+        moDayRowsHtml.push(`
+          <tr onclick="switchDate('${dStr}'); switchToTab('dashboard');" class="cursor-pointer hover:bg-indigo-500/10 transition ${isCurrent ? 'bg-indigo-500/15 font-bold' : ''}">
+            <td class="px-3 py-2 text-left font-mono whitespace-nowrap">${dStr} ${isCurrent ? '<span class="text-indigo-500">●</span>' : ''}</td>
+            <td class="px-2.5 py-2 font-mono text-violet-500">${(m.sleepHrs + m.classesHrs).toFixed(2)}h</td>
+            <td class="px-2.5 py-2 font-mono text-amber-500">${m.totalRoutineAndUnexpectedHrs.toFixed(2)}h</td>
+            <td class="px-2.5 py-2 font-mono font-bold text-sky-500">${(util.remainedStudyMins / 60).toFixed(2)}h</td>
+            <td class="px-2.5 py-2 font-mono font-bold text-emerald-500">${(util.totalUtilizedMins / 60).toFixed(2)}h <span class="text-[10px] text-slate-400">(${(util.studyUsedMins / 60).toFixed(1)}s+${(util.rewardUsedMins / 60).toFixed(1)}r)</span></td>
+            <td class="px-2.5 py-2 font-mono font-extrabold">${util.utilizationPct}%</td>
+            <td class="px-3 py-2 text-center font-mono">${doneTaskCount}/${dData.tasks.length}</td>
+          </tr>
+        `);
+      });
+
+      moLogs.sort((a, b) => {
+        const cmp = b.date.localeCompare(a.date);
+        if (cmp !== 0) return cmp;
+        return timeToMinutes(b.task.startTime) - timeToMinutes(a.task.startTime);
+      });
+
+      const moTotalUtilizedMins = moStudyUsedMins + moRewardUsedMins;
+      const moUtilPct = moRemainedStudyMins > 0
+        ? Math.min(100, Math.round((moTotalUtilizedMins / moRemainedStudyMins) * 100))
+        : 0;
+      const moMonthVideosCount = appState.videos.filter(v => v.date && monthDateSet.has(v.date)).length;
+
+      document.getElementById('mo-kpi-completed').textContent = `${moUtilPct}%`;
+      document.getElementById('mo-kpi-days-sub').textContent = `${(moTotalUtilizedMins / 60).toFixed(2)}h utilized / ${(moRemainedStudyMins / 60).toFixed(2)}h remained`;
+      document.getElementById('mo-kpi-study-hrs').textContent = `${(moTotalUtilizedMins / 60).toFixed(2)} hrs`;
+      document.getElementById('mo-kpi-study-pct').textContent = `${(moStudyUsedMins / 60).toFixed(2)}h study + ${(moRewardUsedMins / 60).toFixed(2)}h reward`;
+      document.getElementById('mo-kpi-deductions-hrs').textContent = `${(moRemainedStudyMins / 60).toFixed(2)} hrs`;
+      document.getElementById('mo-kpi-sleep-sub').textContent = `${moRemainedStudyMins} mins remained across last 30 days`;
+      document.getElementById('mo-kpi-logs-count').textContent = moLogs.length + moMonthVideosCount;
+
+      const moTbody = document.getElementById('monthly-days-tbody');
+      if (moTbody) moTbody.innerHTML = [...moDayRowsHtml].reverse().join('');
+
+      const moFeed = document.getElementById('monthly-logs-feed');
+      if (moFeed) {
+        if (moLogs.length === 0) {
+          moFeed.innerHTML = `<div class="py-8 text-center text-xs text-slate-400">No completed tasks or time logs recorded in the last 30 days yet.</div>`;
+        } else {
+          moFeed.innerHTML = moLogs.map(item =>
+            formatTaskLogItemHtml(item, item.date)
+          ).join('');
+        }
+      }
+
+      if (!document.getElementById('tab-analytics').classList.contains('hidden') && activeAnalyticsPeriod === 'monthly') {
+        renderMonthlyChart(`${monthDates[0]} → ${currentDate}`, monthDates, moRemainedSeries, moUtilizedSeries);
       }
     }
 
-    function renderCharts(dates, completedCounts, sleepSeries, classSeries, routineUnexpSeries, studySeries) {
+    function renderMonthlyChart(rangeLabel, monthDates, availSeries, usedSeries) {
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(148, 163, 184, 0.2)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+      const titleEl = document.getElementById('monthly-chart-title');
+      if (titleEl) titleEl.textContent = `LAST 30 DAYS STUDY + REWARD UTILIZATION (${rangeLabel})`;
+
+      const ctx = document.getElementById('monthlyProgressChart')?.getContext('2d');
+      if (!ctx) return;
+      if (monthlyChartInstance) monthlyChartInstance.destroy();
+      monthlyChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: monthDates.map(d => d.slice(5)),
+          datasets: [
+            {
+              label: 'Remained Study Time (hrs)',
+              data: availSeries,
+              backgroundColor: 'rgba(99, 102, 241, 0.30)',
+              borderColor: '#6366f1',
+              borderWidth: 1,
+              borderRadius: 6
+            },
+            {
+              label: 'Utilized Study + Reward (hrs)',
+              data: usedSeries,
+              backgroundColor: 'rgba(16, 185, 129, 0.88)',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: textColor, font: { family: 'Inter', size: 11 } } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } },
+            x: { ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderCharts(dates, utilPctSeries, sleepSeries, classSeries, routineUnexpSeries, studySeries) {
       const isDark = document.documentElement.classList.contains('dark');
       const gridColor = isDark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(148, 163, 184, 0.2)';
       const textColor = isDark ? '#94a3b8' : '#475569';
@@ -4549,16 +5464,16 @@
           labels,
           datasets: [
             {
-              label: 'Subjects Approved',
-              data: completedCounts,
+              label: 'Study + Reward Utilization (%)',
+              data: utilPctSeries,
               backgroundColor: 'rgba(99, 102, 241, 0.85)',
               borderRadius: 8,
               barPercentage: 0.55,
               order: 2
             },
             {
-              label: 'Performance Trend',
-              data: completedCounts,
+              label: 'Utilization Trend (%)',
+              data: utilPctSeries,
               type: 'line',
               borderColor: '#10b981',
               backgroundColor: '#10b981',
@@ -4578,8 +5493,8 @@
           scales: {
             y: {
               beginAtZero: true,
-              suggestedMax: 14,
-              ticks: { stepSize: 1, color: textColor },
+              max: 100,
+              ticks: { color: textColor },
               grid: { color: gridColor }
             },
             x: {
@@ -4600,7 +5515,7 @@
             { label: 'Sleep (h)', data: sleepSeries, backgroundColor: '#a78bfa' },
             { label: 'Classes (h)', data: classSeries, backgroundColor: '#38bdf8' },
             { label: 'Routines/Unexp (h)', data: routineUnexpSeries, backgroundColor: '#fbbf24' },
-            { label: 'Available Study (h)', data: studySeries, backgroundColor: '#34d399' }
+            { label: 'Remained Study (h)', data: studySeries, backgroundColor: '#34d399' }
           ]
         },
         options: {
@@ -4753,11 +5668,13 @@
       timerState.stepKey = stepKey || null;
       timerState.blockMins = Math.round(minutes);
       document.getElementById('timer-status-text').textContent = 'Ready to start';
+      persistTimerRuntimeState();
       updateTimerUI();
       showToast(`Loaded "${title}" (${minutes}m) into timer`);
     }
 
     function completeTimerImmediately() {
+      isAlarmCurrentlyRinging = true;
       pauseTimer(false);
       timerState.remainingSeconds = 0;
       updateTimerUI();
@@ -4765,6 +5682,7 @@
     }
 
     function completeTimedBlock() {
+      clearPersistedTimerRuntimeState();
       triggerRealAlarmClock(timerState.label);
 
       if (timerState.isReward && timerState.subjectId) {
@@ -4877,6 +5795,16 @@
       const badge = document.getElementById('timer-mode-badge');
       const ring = document.getElementById('timer-svg-ring');
       const card = document.getElementById('timer-card-container');
+      const completeNowBtn = document.getElementById('timer-complete-now-btn');
+
+      if (completeNowBtn) {
+        const allowCompleteNow = Boolean(timerState.isReward || timerState.stepKey === 'video');
+        if (allowCompleteNow) {
+          completeNowBtn.classList.remove('hidden');
+        } else {
+          completeNowBtn.classList.add('hidden');
+        }
+      }
 
       if (timerState.isReward) {
         badge.textContent = 'REWARD BLOCK (25%)';
@@ -4916,6 +5844,7 @@
       updateTimerUI();
 
       if (secsLeft <= 0) {
+        isAlarmCurrentlyRinging = true;
         pauseTimer(false);
         completeTimedBlock();
       }
@@ -4933,6 +5862,7 @@
         }
         timerState.isRunning = true;
         timerState.targetEndTimeMs = Date.now() + timerState.remainingSeconds * 1000;
+        startBackgroundScreenOffGuard(timerState.label);
         const ringClock = new Date(timerState.targetEndTimeMs).toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
@@ -4941,6 +5871,7 @@
         document.getElementById('timer-status-text').textContent = `Active • Rings at ${ringClock}`;
         if (timerState.intervalId) clearInterval(timerState.intervalId);
         timerState.intervalId = setInterval(tickTimer, 250);
+        persistTimerRuntimeState();
         updateTimerUI();
       }
     }
@@ -4948,6 +5879,7 @@
     function pauseTimer(updateLabel = true) {
       timerState.isRunning = false;
       timerState.targetEndTimeMs = null;
+      stopBackgroundScreenOffGuard();
       if (timerState.intervalId) {
         clearInterval(timerState.intervalId);
         timerState.intervalId = null;
@@ -4955,6 +5887,7 @@
       if (updateLabel) {
         document.getElementById('timer-status-text').textContent = 'Paused';
       }
+      persistTimerRuntimeState();
       updateTimerUI();
     }
 
@@ -4963,6 +5896,7 @@
       pauseTimer(false);
       timerState.remainingSeconds = timerState.totalSeconds;
       document.getElementById('timer-status-text').textContent = 'Ready to start';
+      persistTimerRuntimeState();
       updateTimerUI();
     }
 
@@ -4987,10 +5921,21 @@
       const panelEl = document.getElementById(`tab-${target}`);
       if (panelEl) panelEl.classList.remove('hidden');
 
+      if (target === 'matrix') {
+        const dayData = getDayData(currentDate);
+        const metrics = calculateDayMetrics(dayData);
+        const progStats = calculateDailyProgressStats(dayData, metrics);
+        renderSubjectMatrixGrid(dayData, metrics, progStats);
+        renderMasterSpreadsheetTable();
+      }
       if (target === 'calculator') {
         const metrics = calculateDayMetrics(getDayData(currentDate));
         renderFullStudyDivisionTab(metrics);
-        renderMasterSpreadsheetTable();
+      }
+      if (target === 'timer') {
+        const metrics = calculateDayMetrics(getDayData(currentDate));
+        renderFullStudyDivisionTab(metrics);
+        updateTimerUI();
       }
       if (target === 'analytics') renderAnalyticsTab();
       if (target === 'videos') renderVideoVaultTab();
@@ -5014,18 +5959,32 @@
     }
 
     function selectSubjectForCalc(subId) {
+      if (!subId) return;
       selectedSubjectId = subId;
-      renderAll();
+      const dayData = getDayData(currentDate);
+      const metrics = calculateDayMetrics(dayData);
+      renderFullStudyDivisionTab(metrics);
+      renderQuickStudyCalculator(metrics);
+      const progStats = calculateDailyProgressStats(dayData, metrics);
+      renderSubjectMatrixGrid(dayData, metrics, progStats);
+      if (window.lucide) lucide.createIcons();
     }
 
     function openAddTaskModal() {
+      const now = new Date();
+      const startH = String(now.getHours()).padStart(2, '0');
+      const startM = String(now.getMinutes()).padStart(2, '0');
+      const endObj = new Date(now.getTime() + 30 * 60000);
+      const endH = String(endObj.getHours()).padStart(2, '0');
+      const endM = String(endObj.getMinutes()).padStart(2, '0');
+
       document.getElementById('task-modal-title').textContent = 'Add Time-Blocked Task';
       document.getElementById('task-edit-id').value = '';
       document.getElementById('task-name-input').value = '';
       document.getElementById('task-category-input').value = 'unexpected';
       document.getElementById('task-icon-input').value = '⚡';
-      document.getElementById('task-start-input').value = '12:35';
-      document.getElementById('task-end-input').value = '13:10';
+      document.getElementById('task-start-input').value = `${startH}:${startM}`;
+      document.getElementById('task-end-input').value = `${endH}:${endM}`;
       document.getElementById('task-desc-input').value = '';
       updateTaskDurationPreview();
       document.getElementById('task-modal').classList.remove('hidden');
@@ -5384,8 +6343,13 @@
         ];
         const nextStep = stepOrder.find(st => !completedSet.has(st.key) && st.mins > 0) || stepOrder[0];
         loadTimerPreset(`${sub.code} — ${nextStep.label}`, nextStep.mins, false, sub.id, nextStep.key);
-        switchToTab('calculator');
+        switchToTab('timer');
       });
+
+      const monthPickerEl = document.getElementById('analytics-month-input');
+      if (monthPickerEl) {
+        monthPickerEl.addEventListener('change', () => renderAnalyticsTab());
+      }
 
       document.getElementById('timer-start-btn').addEventListener('click', toggleTimer);
       document.getElementById('timer-reset-btn').addEventListener('click', resetTimer);
@@ -5573,16 +6537,82 @@
         });
       }
 
+      const ringtoneInp = document.getElementById('custom-ringtone-file-input');
+      if (ringtoneInp) {
+        ringtoneInp.addEventListener('change', async e => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          try {
+            await saveCustomRingtoneToIDB(file);
+            if (customRingtoneObjectUrl) {
+              try { URL.revokeObjectURL(customRingtoneObjectUrl); } catch (_) {}
+            }
+            customRingtoneObjectUrl = URL.createObjectURL(file);
+            customRingtoneFileName = file.name;
+            updateCustomRingtoneUI();
+            showToast(`Custom alarm song saved: "${file.name}"`);
+          } catch (err) {
+            showToast('Could not save ringtone: ' + err.message, 'error');
+          }
+        });
+      }
+
+      // Immediately reconcile real-clock timer when mobile screen turns on or tab resumes
+      document.addEventListener('visibilitychange', () => {
+        if (timerState.isRunning) {
+          tickTimer();
+          if (document.visibilityState === 'visible' && 'wakeLock' in navigator && !wakeLockSentinel) {
+            navigator.wakeLock.request('screen').then(s => { wakeLockSentinel = s; }).catch(() => {});
+          }
+        }
+      });
+
       renderAll();
       resetProfitForm();
       updateTimerUI();
 
-      // Restore previously linked timeFlow folder (if any) first, then show startup warning + video
-      restoreDirHandle(false).then(ok => {
-        if (ok) setCloudSyncStatus('folder', 'timeFlow Linked');
-        else setCloudSyncStatus('ok', 'Local Ready');
-        setTimeout(() => checkAndShowDailyAlert(), 150);
+      loadCustomRingtoneFromIDB().finally(() => {
+        const restored = restorePersistedTimerRuntimeState();
+        if (restored && timerState.isRunning) {
+          startBackgroundScreenOffGuard(timerState.label);
+        }
       });
+
+      // Anti-Zoom Guard: Lock ONLY zoom-in / zoom-out while keeping vertical & horizontal scrolling completely smooth
+      document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
+      document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
+      document.addEventListener('gestureend', e => e.preventDefault(), { passive: false });
+      document.addEventListener('touchstart', e => {
+        if (e.touches && e.touches.length > 1) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+      document.addEventListener('touchmove', e => {
+        if (e.touches && e.touches.length > 1) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+      document.addEventListener('wheel', e => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+      document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '_', '0'].includes(e.key)) {
+          e.preventDefault();
+        }
+      });
+
+      // Restore previously linked timeFlow folder (if any) and show startup warning + video reliably
+      restoreDirHandle(false)
+        .then(ok => {
+          if (ok) setCloudSyncStatus('folder', 'timeFlow Linked');
+          else setCloudSyncStatus('ok', 'Local Ready');
+        })
+        .catch(() => setCloudSyncStatus('ok', 'Local Ready'))
+        .finally(() => {
+          checkAndShowDailyAlert();
+        });
     });
   </script>
   <div style="margin: 24px auto; text-align: center; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
